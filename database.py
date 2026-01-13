@@ -1,6 +1,7 @@
 import sqlite3
 from datetime import datetime
 import os
+from werkzeug.security import generate_password_hash
 
 # Usar SQLite siempre
 DATABASE_PATH = os.path.join('instance', 'aprendizaje.db')
@@ -1099,6 +1100,49 @@ def init_db():
     conn.commit()
     conn.close()
     print("Base de datos inicializada correctamente")
+    
+    # Asegurar que el usuario admin siempre exista con las credenciales correctas
+    asegurar_admin()
+
+def asegurar_admin():
+    """Asegura que el usuario admin exista con las credenciales correctas.
+    Si no existe, lo crea. Si existe, actualiza su contraseña para asegurar que sea la correcta."""
+    ADMIN_EMAIL = 'admin@gmail.com'
+    ADMIN_PASSWORD = 'admin123456'
+    ADMIN_NOMBRE = 'Administrador'
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Verificar si el admin existe
+        cursor.execute('SELECT * FROM usuarios WHERE email = ?', (ADMIN_EMAIL,))
+        admin = cursor.fetchone()
+        
+        password_hash = generate_password_hash(ADMIN_PASSWORD)
+        
+        if admin:
+            # Si existe, actualizar la contraseña y asegurar que sea admin
+            cursor.execute('''
+                UPDATE usuarios 
+                SET password = ?, es_admin = 1, activo = 1, nombre_completo = ?
+                WHERE email = ?
+            ''', (password_hash, ADMIN_NOMBRE, ADMIN_EMAIL))
+            print(f"✅ Usuario admin actualizado: {ADMIN_EMAIL}")
+        else:
+            # Si no existe, crearlo
+            cursor.execute('''
+                INSERT INTO usuarios (nombre_completo, email, password, es_admin, activo, requiere_cambio_password)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (ADMIN_NOMBRE, ADMIN_EMAIL, password_hash, 1, 1, 0))
+            print(f"✅ Usuario admin creado: {ADMIN_EMAIL}")
+        
+        conn.commit()
+    except Exception as e:
+        print(f"❌ Error al asegurar usuario admin: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
 
 if __name__ == '__main__':
     init_db()
