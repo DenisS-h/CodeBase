@@ -1,0 +1,1108 @@
+{% extends "base.html" %}
+
+{% block title %}Guía de Aprendizaje - Unidad {{ unidad['numero'] }} - CodeBase{% endblock %}
+
+{% block content %}
+<div class="aprender-container">
+    <div class="aprender-header">
+        <h1>📚 Guía de Aprendizaje</h1>
+        <p class="aprender-subtitle">Aprende cómo responder las lecciones de la Unidad {{ unidad['numero'] }}</p>
+    </div>
+
+    <div class="unidad-guia">
+        <div class="unidad-badge-guia">
+            <span class="badge-number">{{ unidad['numero'] }}</span>
+            <span class="badge-text">{{ unidad['titulo'] }}</span>
+        </div>
+
+        <div class="guia-intro">
+            <h2>¡Bienvenido a la Unidad {{ unidad['numero'] }}!</h2>
+            <p>{{ unidad['descripcion'] }}</p>
+            <p class="guia-intro-extra">Te guiaremos paso a paso para que puedas completar las {{ lecciones|length }}
+                lecciones con éxito.</p>
+        </div>
+
+        <!-- PDFs de la unidad -->
+        {% if pdfs %}
+        <div class="pdfs-unidad">
+            <h3>📄 Material de Estudio</h3>
+            <div class="pdfs-grid">
+                {% for pdf in pdfs %}
+                <div class="pdf-card">
+                    <div class="pdf-icon">📄</div>
+                    <div class="pdf-info-card">
+                        <h4>{{ pdf.nombre_archivo }}</h4>
+                        <p class="pdf-fecha-card">Subido: {{ pdf.fecha_subida[:10] }}</p>
+                    </div>
+                    <a href="{{ url_for('uploaded_pdf', filename=pdf.ruta_archivo) }}" target="_blank" class="btn-ver-pdf">
+                        Ver PDF
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Lecciones dinámicas -->
+        {% for leccion in lecciones %}
+        <div class="leccion-guia-card">
+            <div class="leccion-guia-header">
+                <div class="leccion-numero">{{ leccion['orden'] }}</div>
+                <div class="leccion-info">
+                    <h3>{{ leccion['titulo'] }}</h3>
+                    <p class="leccion-descripcion">{{ leccion['descripcion'] }}</p>
+                </div>
+            </div>
+
+            <div class="guia-contenido">
+                {% if unidad['numero'] == 1 %}
+                {# Contenido específico para Unidad 1 #}
+                {% if leccion['orden'] == 1 %}
+                <div class="guia-seccion">
+                    <h4>📖 ¿Qué aprenderás?</h4>
+                    <ul class="guia-lista">
+                        <li>Qué es Python y sus características principales</li>
+                        <li>Por qué Python es tan popular en la industria</li>
+                        <li>En qué áreas se usa comúnmente Python</li>
+                        <li>Características que hacen a Python fácil de aprender</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos para responder</h4>
+                    <ul class="guia-lista">
+                        <li><strong>Lee cuidadosamente:</strong> Cada pregunta tiene opciones que pueden parecer
+                            similares</li>
+                        <li><strong>Python es interpretado:</strong> Recuerda que Python se ejecuta línea por línea sin
+                            compilar</li>
+                        <li><strong>Versatilidad:</strong> Python se usa en desarrollo web, ciencia de datos, IA,
+                            automatización y más</li>
+                        <li><strong>Sintaxis clara:</strong> Una de las principales ventajas de Python es su legibilidad
+                        </li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>🎯 Conceptos clave</h4>
+                    <div class="conceptos-grid">
+                        <div class="concepto-card">
+                            <div class="concepto-icon">🐍</div>
+                            <div class="concepto-titulo">Lenguaje de alto nivel</div>
+                            <div class="concepto-desc">Python es fácil de leer y escribir, similar al lenguaje natural
+                            </div>
+                        </div>
+                        <div class="concepto-card">
+                            <div class="concepto-icon">⚡</div>
+                            <div class="concepto-titulo">Interpretado</div>
+                            <div class="concepto-desc">No necesita compilación, se ejecuta directamente</div>
+                        </div>
+                        <div class="concepto-card">
+                            <div class="concepto-icon">🌐</div>
+                            <div class="concepto-titulo">Multipropósito</div>
+                            <div class="concepto-desc">Se usa en web, datos, IA, automatización y más</div>
+                        </div>
+                    </div>
+                </div>
+                {% elif leccion['orden'] == 2 %}
+                <div class="guia-seccion">
+                    <h4>📖 ¿Qué aprenderás?</h4>
+                    <ul class="guia-lista">
+                        <li>Cómo usar la función print() para mostrar mensajes</li>
+                        <li>Mostrar múltiples valores en un solo print()</li>
+                        <li>Diferenciar entre mostrar texto literal y variables</li>
+                        <li>Controlar saltos de línea con el parámetro end</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos para responder</h4>
+                    <ul class="guia-lista">
+                        <li><strong>Sintaxis correcta:</strong> print("mensaje") - siempre con paréntesis y comillas
+                            para texto</li>
+                        <li><strong>Variables sin comillas:</strong> print(variable) - sin comillas para mostrar el
+                            valor</li>
+                        <li><strong>Múltiples valores:</strong> Sepáralos con comas: print("Hola", nombre)</li>
+                        <li><strong>Sin salto de línea:</strong> Usa end="" para evitar el salto de línea automático
+                        </li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💻 Ejemplos prácticos</h4>
+                    <div class="codigo-ejemplo">
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Mostrar un mensaje simple</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-funcion">print</span>(<span class="codigo-string">"Hola mundo"</span>)
+                        </div>
+                        <div class="codigo-line"></div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Mostrar una variable</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">nombre</span> = <span class="codigo-string">"Python"</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-funcion">print</span>(<span class="codigo-variable">nombre</span>)
+                        </div>
+                        <div class="codigo-line"></div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Múltiples valores</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-funcion">print</span>(<span class="codigo-string">"Hola"</span>, <span
+                                class="codigo-variable">nombre</span>)
+                        </div>
+                    </div>
+                </div>
+                {% elif leccion['orden'] == 3 %}
+                <div class="guia-seccion">
+                    <h4>📖 ¿Qué aprenderás?</h4>
+                    <ul class="guia-lista">
+                        <li>Cómo usar input() para leer datos del usuario</li>
+                        <li>Que input() siempre devuelve un String (texto)</li>
+                        <li>Cómo convertir texto a números con int() y float()</li>
+                        <li>Leer y procesar múltiples entradas del usuario</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos para responder</h4>
+                    <ul class="guia-lista">
+                        <li><strong>input() siempre es texto:</strong> Aunque el usuario escriba números, input()
+                            devuelve String</li>
+                        <li><strong>Conversión necesaria:</strong> Para hacer operaciones matemáticas, usa int() o
+                            float()</li>
+                        <li><strong>Mensaje opcional:</strong> input("mensaje") muestra el mensaje antes de leer</li>
+                        <li><strong>Suma de strings:</strong> Sin conversión, "5" + "3" = "53" (concatenación), no 8
+                        </li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💻 Ejemplos prácticos</h4>
+                    <div class="codigo-ejemplo">
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Leer texto</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">nombre</span> = <span
+                                class="codigo-funcion">input</span>(<span class="codigo-string">"¿Tu nombre? "</span>)
+                        </div>
+                        <div class="codigo-line"></div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Leer y convertir a número</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">edad</span> = <span class="codigo-funcion">int</span>(<span
+                                class="codigo-funcion">input</span>(<span class="codigo-string">"¿Cuántos años?
+                                "</span>))
+                        </div>
+                        <div class="codigo-line"></div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Sumar dos números correctamente</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">a</span> = <span class="codigo-funcion">int</span>(<span
+                                class="codigo-funcion">input</span>(<span class="codigo-string">"Primer número:
+                                "</span>))
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">b</span> = <span class="codigo-funcion">int</span>(<span
+                                class="codigo-funcion">input</span>(<span class="codigo-string">"Segundo número:
+                                "</span>))
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">suma</span> = <span class="codigo-variable">a</span> + <span
+                                class="codigo-variable">b</span>
+                        </div>
+                    </div>
+                </div>
+                {% elif leccion['orden'] == 4 %}
+                <div class="guia-seccion">
+                    <h4>📖 ¿Qué aprenderás?</h4>
+                    <ul class="guia-lista">
+                        <li>Cómo crear comentarios de una línea con #</li>
+                        <li>Crear comentarios de múltiples líneas con triple comillas</li>
+                        <li>Que los comentarios no afectan la ejecución del código</li>
+                        <li>Buenas prácticas para escribir comentarios útiles</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos para responder</h4>
+                    <ul class="guia-lista">
+                        <li><strong>Comentario de línea:</strong> Usa # para comentarios de una línea</li>
+                        <li><strong>Comentarios largos:</strong> Usa """ o ''' para comentarios de múltiples líneas</li>
+                        <li><strong>Ignorados por Python:</strong> Los comentarios no se ejecutan, solo ayudan a
+                            entender el código</li>
+                        <li><strong>Después del código:</strong> Puedes poner # al final de una línea de código</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💻 Ejemplos prácticos</h4>
+                    <div class="codigo-ejemplo">
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Este es un comentario de una línea</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">nombre</span> = <span class="codigo-string">"Python"</span>
+                            <span class="codigo-comentario"># Comentario al final</span>
+                        </div>
+                        <div class="codigo-line"></div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario">"""</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario">Este es un comentario</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario">de múltiples líneas</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario">"""</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% elif unidad['numero'] == 2 %}
+                {# Contenido específico para Unidad 2 #}
+                {% if leccion['orden'] == 1 %}
+                <div class="guia-seccion">
+                    <h4>📖 ¿Qué aprenderás?</h4>
+                    <ul class="guia-lista">
+                        <li>Qué es una variable y para qué sirve</li>
+                        <li>Las reglas para nombrar variables correctamente en Python</li>
+                        <li>Cómo declarar y usar variables</li>
+                        <li>Que las variables pueden cambiar de valor y tipo</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos para responder</h4>
+                    <ul class="guia-lista">
+                        <li><strong>Nombres válidos:</strong> Pueden contener letras, números y guiones bajos (_), pero
+                            NO pueden empezar con número</li>
+                        <li><strong>Case-sensitive:</strong> Python distingue mayúsculas y minúsculas. "Nombre" y
+                            "nombre" son diferentes</li>
+                        <li><strong>Sin espacios:</strong> No puedes usar espacios. Usa guiones bajos: nombre_usuario
+                        </li>
+                        <li><strong>Declaración simple:</strong> En Python no necesitas declarar el tipo, solo asignas:
+                            variable = valor</li>
+                        <li><strong>Tipos dinámicos:</strong> Una variable puede cambiar de tipo: x = 5 luego x = "hola"
+                        </li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💻 Ejemplos prácticos</h4>
+                    <div class="codigo-ejemplo">
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Declarar una variable</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">edad</span> = <span class="codigo-number">25</span>
+                        </div>
+                        <div class="codigo-line"></div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Nombres válidos</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">nombre</span> = <span class="codigo-string">"Python"</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">nombre_usuario</span> = <span
+                                class="codigo-string">"Juan"</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">edad1</span> = <span class="codigo-number">20</span>
+                        </div>
+                        <div class="codigo-line"></div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Nombres inválidos (causarían error)</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># 2nombre = "Error" ❌ No puede empezar con número</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># nombre usuario = "Error" ❌ No puede tener espacios</span>
+                        </div>
+                    </div>
+                </div>
+                {% elif leccion['orden'] == 2 %}
+                <div class="guia-seccion">
+                    <h4>📖 ¿Qué aprenderás?</h4>
+                    <ul class="guia-lista">
+                        <li>Qué es un String (texto) y cómo se representa</li>
+                        <li>Diferencia entre Integer (números enteros) y Float (números decimales)</li>
+                        <li>Cómo identificar y usar cada tipo de dato</li>
+                        <li>La importancia de distinguir entre tipos de datos</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos para responder</h4>
+                    <ul class="guia-lista">
+                        <li><strong>String:</strong> Texto entre comillas simples o dobles: "Hola" o 'Python'</li>
+                        <li><strong>Integer (int):</strong> Números enteros sin decimales: 5, 100, -10</li>
+                        <li><strong>Float:</strong> Números con punto decimal: 3.14, 2.5, -0.5</li>
+                        <li><strong>Diferencia importante:</strong> "123" es String (texto), 123 es Integer (número)
+                        </li>
+                        <li><strong>Operaciones:</strong> No puedes sumar directamente "5" + 3, necesitas convertir
+                            primero</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💻 Ejemplos prácticos</h4>
+                    <div class="codigo-ejemplo">
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># String (texto)</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">nombre</span> = <span class="codigo-string">"Python"</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">numero_texto</span> = <span class="codigo-string">"123"</span>
+                            <span class="codigo-comentario"># Es texto, no número</span>
+                        </div>
+                        <div class="codigo-line"></div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Integer (número entero)</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">edad</span> = <span class="codigo-number">25</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">cantidad</span> = <span class="codigo-number">100</span>
+                        </div>
+                        <div class="codigo-line"></div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Float (número decimal)</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">precio</span> = <span class="codigo-number">19.99</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">pi</span> = <span class="codigo-number">3.14</span>
+                        </div>
+                    </div>
+                </div>
+                {% elif leccion['orden'] == 3 %}
+                <div class="guia-seccion">
+                    <h4>📖 ¿Qué aprenderás?</h4>
+                    <ul class="guia-lista">
+                        <li>Qué son los valores booleanos True y False</li>
+                        <li>Cómo se usan en la programación</li>
+                        <li>La importancia de los booleanos en las decisiones del programa</li>
+                        <li>Valores "truthy" y "falsy" en Python</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos para responder</h4>
+                    <ul class="guia-lista">
+                        <li><strong>Mayúscula inicial:</strong> En Python son True y False (no true/false)</li>
+                        <li><strong>Solo dos valores:</strong> Un booleano solo puede ser True o False, nada más</li>
+                        <li><strong>Uso principal:</strong> Se usan en estructuras condicionales (if/else) para tomar
+                            decisiones</li>
+                        <li><strong>Valores truthy/falsy:</strong> 0, "", [] son "falsy" pero no son exactamente False
+                        </li>
+                        <li><strong>Comparaciones:</strong> Las comparaciones (==, >, <) devuelven booleanos</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💻 Ejemplos prácticos</h4>
+                    <div class="codigo-ejemplo">
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Valores booleanos</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">activo</span> = <span class="codigo-keyword">True</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">desactivado</span> = <span class="codigo-keyword">False</span>
+                        </div>
+                        <div class="codigo-line"></div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Comparaciones devuelven booleanos</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">es_mayor</span> = <span class="codigo-number">10</span> >
+                            <span class="codigo-number">5</span> <span class="codigo-comentario"># True</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">son_iguales</span> = <span class="codigo-number">5</span> ==
+                            <span class="codigo-number">3</span> <span class="codigo-comentario"># False</span>
+                        </div>
+                        <div class="codigo-line"></div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Uso en condicionales</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-keyword">if</span> <span class="codigo-variable">activo</span>:
+                        </div>
+                        <div class="codigo-line">
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-funcion">print</span>(<span
+                                class="codigo-string">"Está activo"</span>)
+                        </div>
+                    </div>
+                </div>
+                {% elif leccion['orden'] == 4 %}
+                <div class="guia-seccion">
+                    <h4>📖 ¿Qué aprenderás?</h4>
+                    <ul class="guia-lista">
+                        <li>Cómo convertir String a Integer con int()</li>
+                        <li>Cómo convertir String a Float con float()</li>
+                        <li>Cómo convertir números a String con str()</li>
+                        <li>Cuándo y por qué necesitas convertir tipos de datos</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos para responder</h4>
+                    <ul class="guia-lista">
+                        <li><strong>int():</strong> Convierte String a número entero: int("123") = 123</li>
+                        <li><strong>float():</strong> Convierte String a número decimal: float("3.14") = 3.14</li>
+                        <li><strong>str():</strong> Convierte cualquier tipo a texto: str(42) = "42"</li>
+                        <li><strong>input() siempre es String:</strong> Por eso necesitas int(input()) para números</li>
+                        <li><strong>Errores comunes:</strong> No puedes convertir "3.14" directamente a int(), primero a
+                            float()</li>
+                        <li><strong>Concatenación vs Suma:</strong> "5" + "3" = "53" (texto), pero int("5") + int("3") =
+                            8</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💻 Ejemplos prácticos</h4>
+                    <div class="codigo-ejemplo">
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Convertir String a Integer</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">texto</span> = <span class="codigo-string">"100"</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">numero</span> = <span class="codigo-funcion">int</span>(<span
+                                class="codigo-variable">texto</span>) <span class="codigo-comentario"># 100</span>
+                        </div>
+                        <div class="codigo-line"></div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Convertir String a Float</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">decimal_texto</span> = <span
+                                class="codigo-string">"3.14"</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">decimal</span> = <span
+                                class="codigo-funcion">float</span>(<span class="codigo-variable">decimal_texto</span>)
+                            <span class="codigo-comentario"># 3.14</span>
+                        </div>
+                        <div class="codigo-line"></div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Convertir número a String</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">edad</span> = <span class="codigo-number">25</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">edad_texto</span> = <span
+                                class="codigo-funcion">str</span>(<span class="codigo-variable">edad</span>) <span
+                                class="codigo-comentario"># "25"</span>
+                        </div>
+                        <div class="codigo-line"></div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Sumar correctamente después de convertir</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">a</span> = <span class="codigo-funcion">int</span>(<span
+                                class="codigo-string">"5"</span>)
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">b</span> = <span class="codigo-funcion">int</span>(<span
+                                class="codigo-string">"3"</span>)
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">suma</span> = <span class="codigo-variable">a</span> + <span
+                                class="codigo-variable">b</span> <span class="codigo-comentario"># 8 (no "53")</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% elif unidad['numero'] == 3 %}
+                {# Contenido específico para Unidad 3 #}
+                {% if leccion['orden'] == 1 %}
+                <div class="guia-seccion">
+                    <h4>📖 ¿Qué aprenderás?</h4>
+                    <ul class="guia-lista">
+                        <li>Los operadores matemáticos básicos (+, -, *, /)</li>
+                        <li>La división entera (//) y el módulo (%)</li>
+                        <li>Cómo elevar números a una potencia (**)</li>
+                        <li>Prioridad de operaciones en Python</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos para responder</h4>
+                    <ul class="guia-lista">
+                        <li><strong>División (/):</strong> Siempre devuelve un decimal (float), ej: 10 / 2 = 5.0</li>
+                        <li><strong>División Entera (//):</strong> Descarta los decimales, ej: 10 // 3 = 3</li>
+                        <li><strong>Módulo (%):</strong> Es el resto de la división. Perfecto para saber si un número es
+                            par.</li>
+                        <li><strong>Potencia (**):</strong> Usa dos asteriscos, no el ^. Ej: 2**3 = 8</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💻 Ejemplos prácticos</h4>
+                    <div class="codigo-ejemplo">
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Operaciones básicas</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-funcion">print</span>(10 + 5) <span class="codigo-comentario">#
+                                15</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-funcion">print</span>(10 // 3) <span class="codigo-comentario"># 3
+                                (división entera)</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-funcion">print</span>(10 % 3) <span class="codigo-comentario"># 1 (sobra
+                                1)</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-funcion">print</span>(2 ** 3) <span class="codigo-comentario"># 8
+                                (2*2*2)</span>
+                        </div>
+                    </div>
+                </div>
+                {% elif leccion['orden'] == 2 %}
+                <div class="guia-seccion">
+                    <h4>📖 ¿Qué aprenderás?</h4>
+                    <ul class="guia-lista">
+                        <li>Cómo comparar dos valores</li>
+                        <li>Los operadores de comparación (==, !=, >, <)< /li>
+                        <li>Que el resultado de una comparación siempre es True o False</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos para responder</h4>
+                    <ul class="guia-lista">
+                        <li><strong>Igualdad (==):</strong> Se usan DOS iguales para comparar. Uno solo (=) es para
+                            asignar.</li>
+                        <li><strong>Diferente (!=):</strong> Verifica si dos valores NO son iguales.</li>
+                        <li><strong>Mayúsculas importan:</strong> "Hola" == "hola" es Falso.</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💻 Ejemplos prácticos</h4>
+                    <div class="codigo-ejemplo">
+                        <div class="codigo-line">
+                            <span class="codigo-variable">edad</span> = 18
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-funcion">print</span>(<span class="codigo-variable">edad</span> >= 18)
+                            <span class="codigo-comentario"># True</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-funcion">print</span>(<span class="codigo-variable">edad</span> == 15)
+                            <span class="codigo-comentario"># False</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-funcion">print</span>(10 != 10) <span class="codigo-comentario"># False
+                                (son iguales)</span>
+                        </div>
+                    </div>
+                </div>
+                {% elif leccion['orden'] == 3 %}
+                <div class="guia-seccion">
+                    <h4>📖 ¿Qué aprenderás?</h4>
+                    <ul class="guia-lista">
+                        <li>La estructura de control if (si)</li>
+                        <li>La estructura else (si no)</li>
+                        <li>La importancia de la indentación (sangría) en Python</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos para responder</h4>
+                    <ul class="guia-lista">
+                        <li><strong>Indentación:</strong> El código dentro del if debe tener espacios al inicio.</li>
+                        <li><strong>Dos puntos (:):</strong> No olvides los dos puntos al final de la línea del if y
+                            else.</li>
+                        <li><strong>Else opcional:</strong> El bloque else se ejecuta solo si la condición es Falsa.
+                        </li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💻 Ejemplos prácticos</h4>
+                    <div class="codigo-ejemplo">
+                        <div class="codigo-line">
+                            <span class="codigo-keyword">if</span> <span class="codigo-variable">edad</span> >= 18:
+                        </div>
+                        <div class="codigo-line">
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-funcion">print</span>(<span
+                                class="codigo-string">"Es adulto"</span>)
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-keyword">else</span>:
+                        </div>
+                        <div class="codigo-line">
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-funcion">print</span>(<span
+                                class="codigo-string">"Es menor"</span>)
+                        </div>
+                    </div>
+                </div>
+                {% elif leccion['orden'] == 4 %}
+                <div class="guia-seccion">
+                    <h4>📖 ¿Qué aprenderás?</h4>
+                    <ul class="guia-lista">
+                        <li>Múltiples condiciones con elif</li>
+                        <li>Operadores lógicos and (y), or (o)</li>
+                        <li>Cómo combinar varias comparaciones</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos para responder</h4>
+                    <ul class="guia-lista">
+                        <li><strong>Elif:</strong> Úsalo para una segunda, tercera, cuarta condición...</li>
+                        <li><strong>And:</strong> TODO debe ser verdad. (Tener entrada Y ser mayor de edad).</li>
+                        <li><strong>Or:</strong> AL MENOS UNO debe ser verdad. (Sábado O Domingo).</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💻 Ejemplos prácticos</h4>
+                    <div class="codigo-ejemplo">
+                        <div class="codigo-line">
+                            <span class="codigo-keyword">if</span> <span class="codigo-variable">color</span> == <span
+                                class="codigo-string">"rojo"</span>:
+                        </div>
+                        <div class="codigo-line">
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-funcion">print</span>(<span
+                                class="codigo-string">"Alto"</span>)
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-keyword">elif</span> <span class="codigo-variable">color</span> == <span
+                                class="codigo-string">"amarillo"</span>:
+                        </div>
+                        <div class="codigo-line">
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-funcion">print</span>(<span
+                                class="codigo-string">"Precaución"</span>)
+                        </div>
+                        <div class="codigo-line"></div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">fin_de_semana</span> = <span
+                                class="codigo-variable">dia</span> == <span class="codigo-string">"sab"</span> <span
+                                class="codigo-keyword">or</span> <span class="codigo-variable">dia</span> == <span
+                                class="codigo-string">"dom"</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% elif unidad['numero'] == 4 %}
+                {# Contenido específico para Unidad 4 #}
+                {% if leccion['orden'] == 1 %}
+                <div class="guia-seccion">
+                    <h4>📖 ¿Qué aprenderás?</h4>
+                    <ul class="guia-lista">
+                        <li>Cómo crear listas usando corchetes []</li>
+                        <li>Qué es un índice y cómo se usa para acceder a elementos</li>
+                        <li>Cómo modificar elementos dentro de una lista</li>
+                        <li>Que las listas pueden contener cualquier tipo de dato</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos para responder</h4>
+                    <ul class="guia-lista">
+                        <li><strong>Índice 0:</strong> ¡Importante! En programación empezamos a contar desde 0. El
+                            primer elemento es lista[0].</li>
+                        <li><strong>Corchetes:</strong> Se usan [] para crear listas y también para acceder elementos:
+                            lista[1].</li>
+                        <li><strong>Tipos mixtos:</strong> Una lista puede tener números, textos y hasta otras listas
+                            adentro.</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💻 Ejemplos prácticos</h4>
+                    <div class="codigo-ejemplo">
+                        <div class="codigo-line">
+                            <span class="codigo-variable">frutas</span> = [<span class="codigo-string">"Manzana"</span>,
+                            <span class="codigo-string">"Banana"</span>]
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-funcion">print</span>(<span class="codigo-variable">frutas</span>[0])
+                            <span class="codigo-comentario"># "Manzana"</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-funcion">print</span>(<span class="codigo-variable">frutas</span>[1])
+                            <span class="codigo-comentario"># "Banana"</span>
+                        </div>
+                    </div>
+                </div>
+                {% elif leccion['orden'] == 2 %}
+                <div class="guia-seccion">
+                    <h4>📖 ¿Qué aprenderás?</h4>
+                    <ul class="guia-lista">
+                        <li>Agregar elementos con .append()</li>
+                        <li>Eliminar elementos con .remove()</li>
+                        <li>Contar elementos con len()</li>
+                        <li>Cómo las listas cambian de tamaño dinámicamente</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos para responder</h4>
+                    <ul class="guia-lista">
+                        <li><strong>.append():</strong> Siempre agrega al FINAL de la lista.</li>
+                        <li><strong>.remove():</strong> Borra por valor ("Gato"), no por posición. Si hay repetidos,
+                            borra el primero.</li>
+                        <li><strong>len():</strong> Devuelve un número (la cantidad). len([1,2,3]) es 3.</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💻 Ejemplos prácticos</h4>
+                    <div class="codigo-ejemplo">
+                        <div class="codigo-line">
+                            <span class="codigo-variable">lista</span> = [<span class="codigo-number">1</span>, <span
+                                class="codigo-number">2</span>]
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">lista</span>.<span class="codigo-funcion">append</span>(<span
+                                class="codigo-number">3</span>)
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-funcion">print</span>(<span class="codigo-funcion">len</span>(<span
+                                class="codigo-variable">lista</span>)) <span class="codigo-comentario"># 3</span>
+                        </div>
+                    </div>
+                </div>
+                {% elif leccion['orden'] == 3 %}
+                <div class="guia-seccion">
+                    <h4>📖 ¿Qué aprenderás?</h4>
+                    <ul class="guia-lista">
+                        <li>Qué es un diccionario y su estructura Clave: Valor</li>
+                        <li>Cómo crear diccionarios con llaves {}</li>
+                        <li>Cómo acceder a valores usando sus claves</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos para responder</h4>
+                    <ul class="guia-lista">
+                        <li><strong>Clave (Key):</strong> Es como la etiqueta. Debe ser única.</li>
+                        <li><strong>Valor (Value):</strong> Es el dato guardado. Puede ser cualquier cosa.</li>
+                        <li><strong>Sintaxis:</strong> {"clave": "valor"}. Ojo a los dos puntos y las comas.</li>
+                        <li><strong>Acceso:</strong> Diccionario["clave"]. Si la clave no existe, da error.</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💻 Ejemplos prácticos</h4>
+                    <div class="codigo-ejemplo">
+                        <div class="codigo-line">
+                            <span class="codigo-variable">persona</span> = {<span class="codigo-string">"nombre"</span>:
+                            <span class="codigo-string">"Ana"</span>}
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-funcion">print</span>(<span class="codigo-variable">persona</span>[<span
+                                class="codigo-string">"nombre"</span>]) <span class="codigo-comentario"># "Ana"</span>
+                        </div>
+                    </div>
+                </div>
+                {% elif leccion['orden'] == 4 %}
+                <div class="guia-seccion">
+                    <h4>📖 ¿Qué aprenderás?</h4>
+                    <ul class="guia-lista">
+                        <li>Diferencia entre Lista y Tupla</li>
+                        <li>Qué es la inmutabilidad</li>
+                        <li>Qué es un Set y cómo elimina duplicados</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos para responder</h4>
+                    <ul class="guia-lista">
+                        <li><strong>Tupla ():</strong> Paréntesis. NO se puede cambiar (error si intentas modificar).
+                        </li>
+                        <li><strong>Lista []:</strong> Corchetes. SÍ se puede cambiar.</li>
+                        <li><strong>Set {}:</strong> Llaves. Elimina duplicados automáticamente y no tiene orden.</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💻 Ejemplos prácticos</h4>
+                    <div class="codigo-ejemplo">
+                        <div class="codigo-line">
+                            <span class="codigo-variable">tupla</span> = (<span class="codigo-number">10</span>, <span
+                                class="codigo-number">20</span>)
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">conjunto</span> = {<span class="codigo-number">1</span>, <span
+                                class="codigo-number">1</span>, <span class="codigo-number">2</span>}
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-funcion">print</span>(<span class="codigo-variable">conjunto</span>)
+                            <span class="codigo-comentario"># {1, 2}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% elif unidad['numero'] == 5 %}
+                {# Contenido específico para Unidad 5 #}
+                {% if leccion['orden'] == 1 %}
+                <div class="guia-seccion">
+                    <h4>📖 ¿Qué aprenderás?</h4>
+                    <ul class="guia-lista">
+                        <li>Qué es un ciclo for y para qué sirve</li>
+                        <li>Cómo recorrer listas elemento por elemento</li>
+                        <li>La sintaxis básica del ciclo for en Python</li>
+                        <li>Cómo procesar cada elemento de una colección automáticamente</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos para responder</h4>
+                    <ul class="guia-lista">
+                        <li><strong>Sintaxis:</strong> for elemento in lista: - siempre termina con dos puntos (:)</li>
+                        <li><strong>Variable temporal:</strong> La variable después de "for" toma el valor de cada elemento</li>
+                        <li><strong>Indentación:</strong> El código dentro del ciclo debe estar indentado (con espacios o tab)</li>
+                        <li><strong>Recorrido automático:</strong> El ciclo recorre todos los elementos sin que tengas que contar</li>
+                        <li><strong>Puede ser cualquier nombre:</strong> Puedes usar "item", "elemento", "x", etc. después de "for"</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💻 Ejemplos prácticos</h4>
+                    <div class="codigo-ejemplo">
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Recorrer una lista de frutas</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">frutas</span> = [<span class="codigo-string">"Manzana"</span>, <span class="codigo-string">"Banana"</span>, <span class="codigo-string">"Cereza"</span>]
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-keyword">for</span> <span class="codigo-variable">fruta</span> <span class="codigo-keyword">in</span> <span class="codigo-variable">frutas</span>:
+                        </div>
+                        <div class="codigo-line">
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-funcion">print</span>(<span class="codigo-variable">fruta</span>)
+                        </div>
+                        <div class="codigo-line"></div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Recorrer una lista de números</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">numeros</span> = [<span class="codigo-number">1</span>, <span class="codigo-number">2</span>, <span class="codigo-number">3</span>]
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-keyword">for</span> <span class="codigo-variable">num</span> <span class="codigo-keyword">in</span> <span class="codigo-variable">numeros</span>:
+                        </div>
+                        <div class="codigo-line">
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-funcion">print</span>(<span class="codigo-variable">num</span> * <span class="codigo-number">2</span>)  <span class="codigo-comentario"># Imprime 2, 4, 6</span>
+                        </div>
+                    </div>
+                </div>
+                {% elif leccion['orden'] == 2 %}
+                <div class="guia-seccion">
+                    <h4>📖 ¿Qué aprenderás?</h4>
+                    <ul class="guia-lista">
+                        <li>Qué es la función range() y para qué sirve</li>
+                        <li>Cómo generar secuencias de números</li>
+                        <li>Las diferentes formas de usar range()</li>
+                        <li>Cómo usar range() con el ciclo for</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos para responder</h4>
+                    <ul class="guia-lista">
+                        <li><strong>range(n):</strong> Genera números del 0 hasta n-1. Ej: range(5) = 0, 1, 2, 3, 4</li>
+                        <li><strong>range(inicio, fin):</strong> Genera desde inicio hasta fin-1. Ej: range(2, 5) = 2, 3, 4</li>
+                        <li><strong>range(inicio, fin, paso):</strong> Genera con saltos. Ej: range(0, 10, 2) = 0, 2, 4, 6, 8</li>
+                        <li><strong>No incluye el último:</strong> range(1, 5) NO incluye el 5, solo 1, 2, 3, 4</li>
+                        <li><strong>Útil con for:</strong> for i in range(5): se ejecuta 5 veces (i = 0, 1, 2, 3, 4)</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💻 Ejemplos prácticos</h4>
+                    <div class="codigo-ejemplo">
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># range con un solo número (del 0 al 4)</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-keyword">for</span> <span class="codigo-variable">i</span> <span class="codigo-keyword">in</span> <span class="codigo-funcion">range</span>(<span class="codigo-number">5</span>):
+                        </div>
+                        <div class="codigo-line">
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-funcion">print</span>(<span class="codigo-variable">i</span>)  <span class="codigo-comentario"># 0, 1, 2, 3, 4</span>
+                        </div>
+                        <div class="codigo-line"></div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># range con inicio y fin (del 2 al 4)</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-keyword">for</span> <span class="codigo-variable">i</span> <span class="codigo-keyword">in</span> <span class="codigo-funcion">range</span>(<span class="codigo-number">2</span>, <span class="codigo-number">5</span>):
+                        </div>
+                        <div class="codigo-line">
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-funcion">print</span>(<span class="codigo-variable">i</span>)  <span class="codigo-comentario"># 2, 3, 4</span>
+                        </div>
+                        <div class="codigo-line"></div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># range con paso (de 0 a 8, de 2 en 2)</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-keyword">for</span> <span class="codigo-variable">i</span> <span class="codigo-keyword">in</span> <span class="codigo-funcion">range</span>(<span class="codigo-number">0</span>, <span class="codigo-number">10</span>, <span class="codigo-number">2</span>):
+                        </div>
+                        <div class="codigo-line">
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-funcion">print</span>(<span class="codigo-variable">i</span>)  <span class="codigo-comentario"># 0, 2, 4, 6, 8</span>
+                        </div>
+                    </div>
+                </div>
+                {% elif leccion['orden'] == 3 %}
+                <div class="guia-seccion">
+                    <h4>📖 ¿Qué aprenderás?</h4>
+                    <ul class="guia-lista">
+                        <li>Qué es un ciclo while y cómo funciona</li>
+                        <li>La diferencia entre for y while</li>
+                        <li>Cómo crear bucles que se ejecuten mientras una condición sea verdadera</li>
+                        <li>Cuándo usar while en lugar de for</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos para responder</h4>
+                    <ul class="guia-lista">
+                        <li><strong>Sintaxis:</strong> while condicion: - se ejecuta mientras la condición sea True</li>
+                        <li><strong>Condición booleana:</strong> La condición debe ser True o False</li>
+                        <li><strong>Cuidado con infinitos:</strong> Si la condición nunca se vuelve False, el ciclo nunca termina</li>
+                        <li><strong>Modificar la condición:</strong> Dentro del ciclo, debes cambiar algo para que eventualmente termine</li>
+                        <li><strong>Diferencia con for:</strong> for recorre elementos, while se ejecuta mientras algo sea cierto</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💻 Ejemplos prácticos</h4>
+                    <div class="codigo-ejemplo">
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Contar hasta 5</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">contador</span> = <span class="codigo-number">1</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-keyword">while</span> <span class="codigo-variable">contador</span> <= <span class="codigo-number">5</span>:
+                        </div>
+                        <div class="codigo-line">
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-funcion">print</span>(<span class="codigo-variable">contador</span>)
+                        </div>
+                        <div class="codigo-line">
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-variable">contador</span> = <span class="codigo-variable">contador</span> + <span class="codigo-number">1</span>
+                        </div>
+                        <div class="codigo-line"></div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Ciclo que se ejecuta mientras una condición sea verdadera</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-variable">activo</span> = <span class="codigo-keyword">True</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-keyword">while</span> <span class="codigo-variable">activo</span>:
+                        </div>
+                        <div class="codigo-line">
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-funcion">print</span>(<span class="codigo-string">"Ejecutando..."</span>)
+                        </div>
+                        <div class="codigo-line">
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-variable">activo</span> = <span class="codigo-keyword">False</span>  <span class="codigo-comentario"># Cambiar para salir</span>
+                        </div>
+                    </div>
+                </div>
+                {% elif leccion['orden'] == 4 %}
+                <div class="guia-seccion">
+                    <h4>📖 ¿Qué aprenderás?</h4>
+                    <ul class="guia-lista">
+                        <li>Qué es break y cómo detener un ciclo</li>
+                        <li>Qué es continue y cómo saltar una iteración</li>
+                        <li>Cuándo usar break vs continue</li>
+                        <li>Cómo controlar el flujo de los ciclos</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos para responder</h4>
+                    <ul class="guia-lista">
+                        <li><strong>break:</strong> Detiene completamente el ciclo y sale de él</li>
+                        <li><strong>continue:</strong> Salta la iteración actual y continúa con la siguiente</li>
+                        <li><strong>break sale:</strong> Cuando encuentres break, el ciclo termina inmediatamente</li>
+                        <li><strong>continue salta:</strong> Cuando encuentres continue, se salta el resto del código y va a la siguiente iteración</li>
+                        <li><strong>Dentro de if:</strong> Normalmente se usan dentro de condiciones if para controlar cuándo aplicarlos</li>
+                    </ul>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💻 Ejemplos prácticos</h4>
+                    <div class="codigo-ejemplo">
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Usar break para detener el ciclo</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-keyword">for</span> <span class="codigo-variable">i</span> <span class="codigo-keyword">in</span> <span class="codigo-funcion">range</span>(<span class="codigo-number">10</span>):
+                        </div>
+                        <div class="codigo-line">
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-keyword">if</span> <span class="codigo-variable">i</span> == <span class="codigo-number">5</span>:
+                        </div>
+                        <div class="codigo-line">
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-keyword">break</span>  <span class="codigo-comentario"># Detiene el ciclo</span>
+                        </div>
+                        <div class="codigo-line">
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-funcion">print</span>(<span class="codigo-variable">i</span>)  <span class="codigo-comentario"># Solo imprime 0, 1, 2, 3, 4</span>
+                        </div>
+                        <div class="codigo-line"></div>
+                        <div class="codigo-line">
+                            <span class="codigo-comentario"># Usar continue para saltar una iteración</span>
+                        </div>
+                        <div class="codigo-line">
+                            <span class="codigo-keyword">for</span> <span class="codigo-variable">i</span> <span class="codigo-keyword">in</span> <span class="codigo-funcion">range</span>(<span class="codigo-number">5</span>):
+                        </div>
+                        <div class="codigo-line">
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-keyword">if</span> <span class="codigo-variable">i</span> == <span class="codigo-number">2</span>:
+                        </div>
+                        <div class="codigo-line">
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-keyword">continue</span>  <span class="codigo-comentario"># Salta el 2</span>
+                        </div>
+                        <div class="codigo-line">
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-funcion">print</span>(<span class="codigo-variable">i</span>)  <span class="codigo-comentario"># Imprime 0, 1, 3, 4 (salta el 2)</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% else %}
+                {# Contenido genérico para otras unidades #}
+                <div class="guia-seccion">
+                    <h4>📖 Sobre esta lección</h4>
+                    <p>{{ leccion['descripcion'] }}</p>
+                    <p>Esta lección forma parte de la Unidad {{ unidad['numero'] }}: {{ unidad['titulo'] }}. Lee
+                        cuidadosamente cada pregunta y las opciones disponibles antes de responder.</p>
+                </div>
+                <div class="guia-seccion">
+                    <h4>💡 Consejos generales</h4>
+                    <ul class="guia-lista">
+                        <li><strong>Lee con atención:</strong> Cada pregunta tiene detalles importantes</li>
+                        <li><strong>Revisa las opciones:</strong> Todas las opciones antes de seleccionar</li>
+                        <li><strong>Piensa en el concepto:</strong> Relaciona la pregunta con lo que aprendiste</li>
+                        <li><strong>Aprende de los errores:</strong> Si te equivocas, lee la explicación</li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Sección de tips generales -->
+        <div class="tips-generales">
+            <h2>🎯 Tips Generales para Completar las Lecciones</h2>
+            <div class="tips-grid">
+                <div class="tip-card">
+                    <div class="tip-icon">📝</div>
+                    <h4>Lee con atención</h4>
+                    <p>Cada pregunta tiene detalles importantes. Lee todas las opciones antes de responder.</p>
+                </div>
+                <div class="tip-card">
+                    <div class="tip-icon">🔄</div>
+                    <h4>Practica los conceptos</h4>
+                    <p>Intenta escribir el código en tu mente antes de ver las opciones. Esto te ayudará a identificar
+                        la respuesta correcta.</p>
+                </div>
+                <div class="tip-card">
+                    <div class="tip-icon">✅</div>
+                    <h4>Revisa tu respuesta</h4>
+                    <p>Después de seleccionar, piensa si tiene sentido. La explicación te ayudará a entender mejor.</p>
+                </div>
+                <div class="tip-card">
+                    <div class="tip-icon">💪</div>
+                    <h4>No te rindas</h4>
+                    <p>Si te equivocas, lee la explicación y aprende del error. Puedes intentar de nuevo.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botón para ir al dashboard -->
+        <div class="guia-acciones">
+            <a href="{{ url_for('dashboard') }}" class="btn-empezar">
+                <span>🚀 Ir a las Lecciones</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

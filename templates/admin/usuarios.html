@@ -1,0 +1,585 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+<div class="users-page">
+    <div class="content-card">
+        <div class="card-header">
+            <h3>Listado de Usuarios</h3>
+            <div class="header-actions">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" placeholder="Buscar usuario..." id="userSearch">
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="premium-table">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Email</th>
+                        <th>Racha</th>
+                        <th>Estado</th>
+                        <th>Rol</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios %}
+                    <tr>
+                        <td>
+                            <div class="user-cell">
+                                <div class="cell-avatar">{{ usuario.nombre_completo[0].upper() }}</div>
+                                <div class="cell-info">
+                                    <span class="cell-name">{{ usuario.nombre_completo }}</span>
+                                    <span class="cell-id">#{{ usuario.id }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="cell-email">{{ usuario.email }}</span>
+                        </td>
+                        <td>
+                            <div class="racha-cell">
+                                <span class="racha-icon">🔥</span>
+                                <span class="racha-dias">{{ usuario.racha_dias or 0 }}</span>
+                                <span class="racha-label">días</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge {% if usuario.activo %}badge-success{% else %}badge-danger{% endif %}">
+                                <span class="badge-dot"></span>
+                                {{ 'Activo' if usuario.activo else 'Inactivo' }}
+                            </span>
+                        </td>
+                        <td>
+                            <span
+                                class="badge {% if usuario.es_admin %}badge-primary{% else %}badge-secondary{% endif %}">
+                                {{ 'Administrador' if usuario.es_admin else 'Estudiante' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                {% if usuario.id != session.usuario_id %}
+                                <button
+                                    onclick="toggleEstado({{ usuario.id }}, {{ 'true' if usuario.activo else 'false' }})"
+                                    class="action-btn {% if usuario.activo %}btn-deactivate{% else %}btn-activate{% endif %}"
+                                    title="{{ 'Desactivar' if usuario.activo else 'Activar' }}">
+                                    {% if usuario.activo %}🚫{% else %}✅{% endif %}
+                                </button>
+                                {% endif %}
+                                <button onclick="cambiarPassword({{ usuario.id }})" class="action-btn btn-key"
+                                    title="Cambiar contraseña">🔑</button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Cambio de Password -->
+<div id="passwordModal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>Cambiar Contraseña</h3>
+            <button onclick="closeModal()" class="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="modalUserId">
+            <div class="premium-form-group">
+                <label>Nueva Contraseña</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" id="newPassword" placeholder="Mínimo 6 caracteres" minlength="6">
+                </div>
+                <p class="form-hint">Asegúrate de que sea una contraseña segura.</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeModal()" class="btn-cancel">Cancelar</button>
+            <button onclick="savePassword()" class="btn-save">Actualizar Contraseña</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .content-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: var(--admin-card-shadow);
+        border: 1px solid #f1f5f9;
+        overflow: hidden;
+    }
+
+    .card-header {
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #fafafa;
+    }
+
+    .card-header h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+    /* Search Box */
+    .search-box {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        color: #94a3b8;
+    }
+
+    .search-box input {
+        padding: 0.6rem 1rem 0.6rem 2.8rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        width: 250px;
+        transition: all 0.2s;
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: var(--admin-primary);
+        box-shadow: 0 0 0 4px rgba(88, 204, 2, 0.1);
+        width: 300px;
+    }
+
+    /* Table Styles */
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .premium-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .premium-table th {
+        text-align: left;
+        padding: 1rem 2rem;
+        background: #f8fafc;
+        color: #64748b;
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .premium-table td {
+        padding: 1.25rem 2rem;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+
+    .premium-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .cell-avatar {
+        width: 40px;
+        height: 40px;
+        background: #f1f5f9;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #475569;
+        font-size: 1rem;
+    }
+
+    .cell-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .cell-name {
+        font-weight: 600;
+        color: #0f172a;
+        font-size: 0.95rem;
+    }
+
+    .cell-id {
+        font-size: 0.75rem;
+        color: #94a3b8;
+    }
+
+    .cell-email {
+        color: #475569;
+        font-size: 0.875rem;
+    }
+
+    /* Racha Cell */
+    .racha-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.4rem 0.75rem;
+        background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+        border-radius: 10px;
+        width: fit-content;
+    }
+
+    .racha-icon {
+        font-size: 1rem;
+    }
+
+    .racha-dias {
+        font-weight: 700;
+        color: #ea580c;
+        font-size: 1rem;
+    }
+
+    .racha-label {
+        font-size: 0.75rem;
+        color: #9a3412;
+        font-weight: 500;
+    }
+
+    /* Badges */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.85rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .badge-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+    }
+
+    .badge-success {
+        background: #ecfdf5;
+        color: #059669;
+    }
+
+    .badge-success .badge-dot {
+        background: #059669;
+    }
+
+    .badge-danger {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+
+    .badge-danger .badge-dot {
+        background: #dc2626;
+    }
+
+    .badge-primary {
+        background: rgba(88, 204, 2, 0.1);
+        color: var(--admin-primary);
+    }
+
+    .badge-secondary {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .action-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 1rem;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-deactivate:hover {
+        background: #fef2f2;
+        border-color: #fecaca;
+    }
+
+    .btn-activate:hover {
+        background: #ecfdf5;
+        border-color: #a7f3d0;
+    }
+
+    .btn-key:hover {
+        background: #fffbeb;
+        border-color: #fef3c7;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 2rem;
+    }
+
+    .modal-card {
+        background: white;
+        width: 100%;
+        max-width: 450px;
+        border-radius: 24px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        animation: modalSlide 0.3s ease-out;
+        overflow: hidden;
+    }
+
+    @keyframes modalSlide {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .modal-header {
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        color: #0f172a;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #94a3b8;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+
+    .modal-close:hover {
+        color: #0f172a;
+    }
+
+    .modal-body {
+        padding: 2rem;
+    }
+
+    .premium-form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #475569;
+        font-size: 0.875rem;
+    }
+
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 1rem;
+        color: #94a3b8;
+    }
+
+    .input-wrapper input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 2.8rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.2s;
+    }
+
+    .input-wrapper input:focus {
+        outline: none;
+        border-color: var(--admin-primary);
+        box-shadow: 0 0 0 4px rgba(88, 204, 2, 0.1);
+    }
+
+    .form-hint {
+        margin-top: 0.5rem;
+        font-size: 0.75rem;
+        color: #94a3b8;
+    }
+
+    .modal-footer {
+        padding: 1.5rem 2rem;
+        background: #f8fafc;
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+    }
+
+    .btn-cancel,
+    .btn-save {
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-cancel {
+        background: white;
+        border: 1px solid #e2e8f0;
+        color: #64748b;
+    }
+
+    .btn-cancel:hover {
+        background: #f1f5f9;
+    }
+
+    .btn-save {
+        background: var(--admin-primary);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 6px -1px rgba(88, 204, 2, 0.4);
+    }
+
+    .btn-save:hover {
+        background: var(--admin-primary-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 10px -1px rgba(88, 204, 2, 0.5);
+    }
+</style>
+
+<script>
+    // Filtrado de búsqueda simple
+    document.getElementById('userSearch').addEventListener('input', function (e) {
+        const term = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('.premium-table tbody tr');
+
+        rows.forEach(row => {
+            const name = row.querySelector('.cell-name').textContent.toLowerCase();
+            const email = row.querySelector('.cell-email').textContent.toLowerCase();
+            if (name.includes(term) || email.includes(term)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    async function toggleEstado(userId, currentActive) {
+        if (!confirm(`¿Estás seguro de que deseas ${currentActive ? 'desactivar' : 'activar'} este usuario?`)) return;
+
+        try {
+            const response = await fetch(`/admin/usuarios/${userId}/estado`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ activo: !currentActive })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Error al cambiar estado');
+            }
+        } catch (e) {
+            alert('Error de conexión');
+        }
+    }
+
+    function cambiarPassword(userId) {
+        document.getElementById('modalUserId').value = userId;
+        document.getElementById('newPassword').value = '';
+        document.getElementById('passwordModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('passwordModal').style.display = 'none';
+    }
+
+    async function savePassword() {
+        const userId = document.getElementById('modalUserId').value;
+        const password = document.getElementById('newPassword').value;
+
+        if (password.length < 6) {
+            alert('La contraseña debe tener al menos 6 caracteres');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/admin/usuarios/${userId}/password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: password })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                // Notificación de éxito
+                alert('Contraseña actualizada exitosamente');
+                closeModal();
+            } else {
+                alert(data.message || 'Error al cambiar contraseña');
+            }
+        } catch (e) {
+            alert('Error de conexión');
+        }
+    }
+
+    // Cerrar modal al hacer clic fuera
+    window.onclick = function (event) {
+        const modal = document.getElementById('passwordModal');
+        if (event.target == modal) {
+            closeModal();
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,195 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Panel del Administrador{% endblock %}
+
+{% block content %}
+<div class="dashboard-overview">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper" style="background: rgba(88, 204, 2, 0.1); color: #58cc02;">
+                    👥
+                </div>
+                <div class="stat-trend positive">
+                    ↑ 12%
+                </div>
+            </div>
+            <div class="stat-body">
+                <h3>Usuarios Totales</h3>
+                <p class="stat-value">{{ stats.total_usuarios }}</p>
+                <div class="stat-progress">
+                    <div class="progress-bar" style="width: 75%; background: #58cc02;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper" style="background: rgba(76, 175, 80, 0.1); color: #4CAF50;">
+                    📚
+                </div>
+                <div class="stat-trend neutral">
+                    - 0%
+                </div>
+            </div>
+            <div class="stat-body">
+                <h3>Unidades Activas</h3>
+                <p class="stat-value">{{ stats.unidades }}</p>
+                <div class="stat-progress">
+                    <div class="progress-bar" style="width: 100%; background: #4CAF50;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper" style="background: rgba(255, 193, 7, 0.1); color: #FFC107;">
+                    🔥
+                </div>
+                <div class="stat-trend positive">
+                    ↑ 5%
+                </div>
+            </div>
+            <div class="stat-body">
+                <h3>Racha Promedio</h3>
+                <p class="stat-value">4.2</p>
+                <div class="stat-progress">
+                    <div class="progress-bar" style="width: 42%; background: #FFC107;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: var(--admin-card-shadow);
+        transition: all 0.3s ease;
+        border: 1px solid #f1f5f9;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    .stat-icon-wrapper {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+    }
+
+    .stat-trend {
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .stat-trend.positive {
+        background: #ecfdf5;
+        color: #059669;
+    }
+
+    .stat-trend.neutral {
+        background: #f1f5f9;
+        color: #64748b;
+    }
+
+    .stat-body h3 {
+        margin: 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .stat-value {
+        margin: 0.5rem 0;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1;
+    }
+
+    .stat-progress {
+        height: 6px;
+        background: #f1f5f9;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-top: 1rem;
+    }
+
+    .progress-bar {
+        height: 100%;
+        transition: width 1s ease-in-out;
+    }
+    
+    /* Estilos responsivos */
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        .stat-card {
+            padding: 1.5rem;
+            border-radius: 16px;
+        }
+        
+        .stat-icon-wrapper {
+            width: 48px;
+            height: 48px;
+            font-size: 1.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .stat-card {
+            padding: 1.25rem;
+        }
+        
+        .stat-icon-wrapper {
+            width: 42px;
+            height: 42px;
+            font-size: 1.25rem;
+            border-radius: 12px;
+        }
+        
+        .stat-body h3 {
+            font-size: 0.75rem;
+        }
+        
+        .stat-value {
+            font-size: 1.75rem;
+        }
+    }
+</style>
+{% endblock %}

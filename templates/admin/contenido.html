@@ -1,0 +1,96 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Gestionar Contenido{% endblock %}
+
+{% block content %}
+<div class="contenido-page">
+    <div class="page-header">
+        <h2>📝 Gestión de Contenido</h2>
+        <p class="page-subtitle">Administra ejercicios, unidades y contenido PDF del sistema</p>
+    </div>
+
+    <div class="contenido-menu">
+        <a href="{{ url_for('admin_ejercicios') }}" class="contenido-card">
+            <div class="card-icon">➕</div>
+            <h3>Agregar Ejercicios</h3>
+            <p>Gestiona ejercicios de las lecciones: agregar, editar y eliminar preguntas</p>
+        </a>
+        
+        <a href="{{ url_for('admin_pdf') }}" class="contenido-card">
+            <div class="card-icon">📄</div>
+            <h3>Subir PDF</h3>
+            <p>Sube, edita y elimina archivos PDF para cada unidad</p>
+        </a>
+    </div>
+</div>
+
+<style>
+    .contenido-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .page-header {
+        margin-bottom: 3rem;
+        text-align: center;
+    }
+
+    .page-header h2 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+        color: #0f172a;
+    }
+
+    .page-subtitle {
+        color: #64748b;
+        margin: 0;
+        font-size: 1.1rem;
+    }
+
+    .contenido-menu {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .contenido-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        text-decoration: none;
+        color: inherit;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        border: 2px solid #f1f5f9;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .contenido-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border-color: var(--admin-primary);
+    }
+
+    .card-icon {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .contenido-card h3 {
+        margin: 0 0 1rem 0;
+        font-size: 1.5rem;
+        color: #0f172a;
+    }
+
+    .contenido-card p {
+        margin: 0;
+        color: #64748b;
+        line-height: 1.6;
+    }
+</style>
+{% endblock %}

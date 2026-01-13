@@ -1,0 +1,796 @@
+{% extends "base.html" %}
+
+{% block title %}{{ leccion['titulo'] }} - CodeDuo{% endblock %}
+
+{% block content %}
+<div class="leccion-container" data-total-ejercicios="{{ ejercicios|length }}" data-leccion-id="{{ leccion['id'] }}">
+    <!-- Header de la lección -->
+    <div class="leccion-header">
+        <div class="header-nav">
+            <a href="{{ url_for('dashboard') }}" class="btn-back">✕</a>
+            <div class="leccion-progreso-header">
+                <div class="progreso-bar">
+                    <div class="progreso-fill" id="progreso-fill"></div>
+                </div>
+                <span class="progreso-texto"><span id="ejercicio-actual">1</span> / <span id="total-ejercicios">{{
+                        ejercicios|length }}</span></span>
+            </div>
+            <button class="btn-continuar-header" id="btn-continuar-header" disabled>Continuar</button>
+        </div>
+    </div>
+
+    <!-- Contenedor de ejercicios -->
+    <div class="ejercicios-wrapper">
+        {% if ejercicios %}
+        {% for ejercicio in ejercicios %}
+        <div class="ejercicio-contenido" id="ejercicio-{{ loop.index }}" {% if loop.index> 1 %}style="display: none;"{%
+            endif %} data-ejercicio-id="{{ ejercicio['id'] }}"
+            data-respuesta-correcta="{{ ejercicio.get('respuesta_correcta', '') }}">
+            {% if ejercicio['tipo'] != 'fill_in_blank' %}
+            <h2 class="ejercicio-pregunta">{{ ejercicio['pregunta'] }}</h2>
+            {% endif %}
+
+            {% if ejercicio['tipo'] == 'opcion_multiple' %}
+            <div class="opciones-container">
+                {% set opciones = ejercicio['opciones'].split('|') %}
+                {% for opcion in opciones %}
+                {% set partes = opcion.split(')', 1) %}
+                {% set letra = partes[0] %}
+                {% set texto = partes[1] if partes|length > 1 else '' %}
+                <button class="opcion-btn opcion-codigo" data-opcion="{{ letra.strip() }}">
+                    <span class="opcion-letra">{{ letra.strip() }}</span>
+                    <span class="opcion-texto codigo-texto">{{ texto|replace('\\n', '<br>')|safe }}</span>
+                </button>
+                {% endfor %}
+            </div>
+            {% elif ejercicio['tipo'] == 'verdadero_falso' %}
+            <div class="opciones-container">
+                <button class="opcion-btn" data-opcion="verdadero">
+                    <span class="opcion-icono">✓</span>
+                    <span class="opcion-texto">Verdadero</span>
+                </button>
+                <button class="opcion-btn" data-opcion="falso">
+                    <span class="opcion-icono">✕</span>
+                    <span class="opcion-texto">Falso</span>
+                </button>
+            </div>
+            {% elif ejercicio['tipo'] == 'fill_in_blank' %}
+            <div class="fill-blank-container">
+                {% set pregunta_html = ejercicio['pregunta'] %}
+                {% set texto_pregunta = '' %}
+                {% set codigo_ejemplo = '' %}
+                {% if '<code>' in pregunta_html %}
+                            {% set partes = pregunta_html.split('<code>') %}
+                            {% set texto_pregunta = partes[0]|replace('<br>', ' ')|replace('<br/>', ' ')|replace('<br />', ' ')|trim %}
+                            {% if partes|length > 1 %}
+                                {% set codigo_con_cierre = partes[1].split('</code>')[0] %}
+                {% set codigo_ejemplo = codigo_con_cierre|replace('___', '')|replace('<br>', '\n')|replace('<br />',
+                '\n')|replace('<br />', '\n')|trim %}
+                {% endif %}
+                {% else %}
+                {% set texto_pregunta = pregunta_html|replace('<br>', ' ')|replace('<br />', ' ')|replace('<br />', '
+                ')|trim %}
+                {% endif %}
+                {% if texto_pregunta %}
+                <h2 class="ejercicio-pregunta">{{ texto_pregunta }}</h2>
+                {% endif %}
+                <div class="codigo-editor-wrapper">
+                    <div class="codigo-editor-header">
+                        <span class="editor-label">Escribe tu código aquí:</span>
+                    </div>
+                    <div class="codigo-editor-container">
+                        <div class="line-numbers" id="line-numbers-{{ ejercicio['id'] }}">1</div>
+                        <textarea class="codigo-editor" data-ejercicio-id="{{ ejercicio['id'] }}"
+                            placeholder="Escribe el código completo..." oninput="actualizarNumeros(this)"
+                            onscroll="sincronizarScroll(this)">{{ codigo_ejemplo }}</textarea>
+                    </div>
+                </div>
+                <button class="btn-verificar-blank" data-ejercicio-id="{{ ejercicio['id'] }}">Verificar</button>
+            </div>
+            {% elif ejercicio['tipo'] == 'teoria' %}
+            <div class="teoria-container">
+                <div class="teoria-icono">💡</div>
+                <div class="teoria-contenido">
+                    {{ ejercicio['pregunta']|safe }}
+                </div>
+                <button class="btn-continuar-teoria" data-ejercicio-id="{{ ejercicio['id'] }}">Entendido,
+                    continuar</button>
+            </div>
+            {% elif ejercicio['tipo'] == 'texto' %}
+            <div class="texto-container">
+                <input type="text" class="respuesta-texto" placeholder="Escribe tu respuesta aquí..." />
+                <button class="btn-verificar">Verificar</button>
+            </div>
+            {% endif %}
+
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="sin-ejercicios">
+            <p>No hay ejercicios disponibles para esta lección todavía.</p>
+            <a href="{{ url_for('dashboard') }}" class="btn-primary">Volver al Dashboard</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Pantalla de finalización -->
+    <div class="finalizacion-overlay" id="finalizacion-overlay" style="display: none;">
+        <div class="finalizacion-card">
+            <div class="finalizacion-contenido">
+                <div class="finalizacion-animacion">
+                    <div class="confetti confetti-1"></div>
+                    <div class="confetti confetti-2"></div>
+                    <div class="confetti confetti-3"></div>
+                    <div class="confetti confetti-4"></div>
+                    <div class="confetti confetti-5"></div>
+                </div>
+                <div class="finalizacion-icon-wrapper">
+                    <img src="{{ url_for('static', filename='images/rencorosa.png') }}" alt="Celebración"
+                        class="finalizacion-icon">
+                </div>
+                <h2 class="finalizacion-titulo">¡Lección Completada!</h2>
+
+                <!-- Indicador de calificación grande -->
+                <div class="calificacion-resultado" id="calificacion-resultado">
+                    <div class="calificacion-circulo" id="calificacion-circulo">
+                        <span class="calificacion-numero" id="calificacion-numero">0</span>
+                        <span class="calificacion-sobre">/10</span>
+                    </div>
+                    <div class="calificacion-estado" id="calificacion-estado"></div>
+                </div>
+
+                <div class="finalizacion-stats">
+                    <div class="stat-card stat-correctas">
+                        <div class="stat-icon">✓</div>
+                        <div class="stat-info">
+                            <span class="stat-label">RESPUESTAS CORRECTAS</span>
+                            <span class="stat-valor">
+                                <span id="respuestas-correctas">0</span> / <span id="total-ejercicios-fin">0</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-precision">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-info">
+                            <span class="stat-label">PRECISIÓN</span>
+                            <span class="stat-valor" id="porcentaje-correctas">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mensaje según resultado -->
+                <div class="finalizacion-mensaje" id="finalizacion-mensaje"></div>
+
+                <div class="finalizacion-botones">
+                    <a href="{{ url_for('leccion', leccion_id=leccion['id']) }}" class="btn-finalizacion btn-secundario"
+                        id="btn-reintentar">Reintentar</a>
+                    <a href="{{ url_for('dashboard') }}" class="btn-finalizacion btn-primario">Continuar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback independiente fuera del contenedor principal -->
+    <div class="feedback-container" id="feedback-container" style="display: none;">
+        <div class="feedback" id="feedback-global">
+            <div class="feedback-correcto" id="feedback-correcto" style="display: none;">
+                <div>
+                    <div class="feedback-icon">✓</div>
+                    <div class="feedback-contenido">
+                        <h3>¡Correcto!</h3>
+                    </div>
+                </div>
+                <div>
+                    <p class="feedback-explicacion"></p>
+                </div>
+            </div>
+            <div class="feedback-incorrecto" id="feedback-incorrecto" style="display: none;">
+                <div>
+                    <div class="feedback-icon">✕</div>
+                    <div class="feedback-contenido">
+                        <h3>Incorrecto</h3>
+                    </div>
+                </div>
+                <div>
+                    <p class="feedback-respuesta">Respuesta correcta: <strong></strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilos para la calificación */
+    .calificacion-resultado {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 20px 0;
+    }
+
+    .calificacion-circulo {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.5s ease;
+    }
+
+    .calificacion-circulo.aprobada {
+        background: linear-gradient(135deg, #10B981, #059669);
+        box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4);
+    }
+
+    .calificacion-circulo.no-aprobada {
+        background: linear-gradient(135deg, #F59E0B, #D97706);
+        box-shadow: 0 8px 30px rgba(245, 158, 11, 0.4);
+    }
+
+    .calificacion-numero {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: white;
+        line-height: 1;
+    }
+
+    .calificacion-sobre {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .calificacion-estado {
+        margin-top: 12px;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .calificacion-estado.aprobada {
+        color: #10B981;
+    }
+
+    .calificacion-estado.no-aprobada {
+        color: #F59E0B;
+    }
+
+    .finalizacion-mensaje {
+        margin: 15px 0;
+        padding: 15px 20px;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        text-align: center;
+    }
+
+    .finalizacion-mensaje.aprobada {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: #059669;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .finalizacion-mensaje.no-aprobada {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: #B45309;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .finalizacion-mensaje.mejor {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: #1D4ED8;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    #btn-reintentar {
+        display: none;
+    }
+
+    #btn-reintentar.visible {
+        display: inline-flex;
+    }
+</style>
+
+<script>
+    let ejercicioActual = 1;
+    let leccionContainer = null;
+    let totalEjercicios = 0;
+    let respuestasCorrectas = 0;
+    let leccionId = 0;
+
+    // Inicializar eventos cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', function () {
+        // Inicializar variables desde el DOM
+        leccionContainer = document.querySelector('.leccion-container');
+        if (leccionContainer) {
+            totalEjercicios = parseInt(leccionContainer.getAttribute('data-total-ejercicios') || '0');
+            leccionId = parseInt(leccionContainer.getAttribute('data-leccion-id') || '0');
+        }
+
+        console.log('Inicializado: leccionId=' + leccionId + ', totalEjercicios=' + totalEjercicios);
+
+        // Deshabilitar botón continuar al inicio
+        const btnContinuarHeader = document.getElementById('btn-continuar-header');
+        if (btnContinuarHeader) {
+            btnContinuarHeader.disabled = true;
+        }
+
+        inicializarEjercicios();
+        actualizarProgreso();
+    });
+
+    function inicializarEjercicios() {
+        // Eventos para botones de opción múltiple y verdadero/falso
+        document.querySelectorAll('.opcion-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const feedbackContainer = document.getElementById('feedback-container');
+                if (!feedbackContainer || feedbackContainer.style.display === 'none') {
+                    seleccionarOpcion(this);
+                }
+            });
+        });
+
+        // Eventos para ejercicios de texto
+        document.querySelectorAll('.btn-verificar').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const ejercicioContenido = this.closest('.ejercicio-contenido');
+                const inputTexto = ejercicioContenido.querySelector('.respuesta-texto');
+                if (inputTexto && inputTexto.value.trim()) {
+                    const btnContinuarHeader = document.getElementById('btn-continuar-header');
+                    if (btnContinuarHeader) {
+                        btnContinuarHeader.disabled = false;
+                    }
+                    verificarRespuesta(ejercicioContenido, inputTexto.value.trim());
+                }
+            });
+        });
+
+        // Eventos para ejercicios fill in the blank
+        document.querySelectorAll('.btn-verificar-blank').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const ejercicioContenido = this.closest('.ejercicio-contenido');
+                const ejercicioId = ejercicioContenido.getAttribute('data-ejercicio-id');
+                const codigoEditor = ejercicioContenido.querySelector('.codigo-editor');
+
+                if (codigoEditor) {
+                    const codigoCompleto = codigoEditor.value.trim();
+
+                    if (codigoCompleto) {
+                        const btnContinuarHeader = document.getElementById('btn-continuar-header');
+                        if (btnContinuarHeader) {
+                            btnContinuarHeader.disabled = false;
+                        }
+
+                        verificarRespuesta(ejercicioContenido, codigoCompleto);
+                    } else {
+                        alert('Por favor escribe el código');
+                    }
+                }
+            });
+        });
+
+        // Eventos para botones de "Continuar" en teoría
+        document.querySelectorAll('.btn-continuar-teoria').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const btnContinuarHeader = document.getElementById('btn-continuar-header');
+                if (btnContinuarHeader) {
+                    btnContinuarHeader.disabled = false;
+                }
+                siguienteEjercicio();
+            });
+        });
+
+        // Evento para botón continuar del header
+        const btnContinuarHeader = document.getElementById('btn-continuar-header');
+        if (btnContinuarHeader) {
+            btnContinuarHeader.addEventListener('click', function () {
+                if (!this.disabled) {
+                    siguienteEjercicio();
+                }
+            });
+        }
+    }
+
+    function seleccionarOpcion(boton) {
+        const ejercicioContenido = boton.closest('.ejercicio-contenido');
+        const opciones = ejercicioContenido.querySelectorAll('.opcion-btn');
+
+        // Remover selección previa
+        opciones.forEach(opt => {
+            opt.classList.remove('seleccionada');
+        });
+
+        // Marcar como seleccionada
+        boton.classList.add('seleccionada');
+
+        // Habilitar botón continuar cuando se selecciona una respuesta
+        const btnContinuarHeader = document.getElementById('btn-continuar-header');
+        if (btnContinuarHeader) {
+            btnContinuarHeader.disabled = false;
+        }
+
+        // Obtener la opción seleccionada
+        const opcionSeleccionada = boton.getAttribute('data-opcion');
+
+        // Verificar respuesta después de un pequeño delay para mejor UX
+        setTimeout(() => {
+            verificarRespuesta(ejercicioContenido, opcionSeleccionada);
+        }, 300);
+    }
+
+    function verificarRespuesta(ejercicioContenido, respuestaUsuario) {
+        const ejercicioId = ejercicioContenido.getAttribute('data-ejercicio-id');
+
+        // Deshabilitar botones y inputs
+        ejercicioContenido.querySelectorAll('.opcion-btn, .btn-verificar, .btn-verificar-blank').forEach(btn => {
+            btn.disabled = true;
+        });
+
+        // Obtener la respuesta correcta mezclada del atributo data
+        const respuestaCorrectaMezclada = ejercicioContenido.getAttribute('data-respuesta-correcta');
+
+        // Realizar petición al servidor
+        fetch('/verificar_respuesta', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                ejercicio_id: ejercicioId,
+                respuesta: respuestaUsuario,
+                respuesta_correcta_mezclada: respuestaCorrectaMezclada
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                mostrarFeedback(ejercicioContenido, data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Hubo un error al verificar la respuesta. Por favor, intenta de nuevo.');
+            });
+    }
+
+    function mostrarFeedback(ejercicioContenido, data) {
+        const feedbackContainer = document.getElementById('feedback-container');
+        const feedbackCorrecto = document.getElementById('feedback-correcto');
+        const feedbackIncorrecto = document.getElementById('feedback-incorrecto');
+
+        // Limpiar clases de animación previas y mostrar con animación
+        if (feedbackContainer) {
+            feedbackContainer.classList.remove('hide');
+            feedbackContainer.style.display = 'block';
+            void feedbackContainer.offsetWidth;
+            feedbackContainer.classList.add('show');
+        }
+
+        const btnContinuarHeader = document.getElementById('btn-continuar-header');
+        if (btnContinuarHeader) {
+            btnContinuarHeader.disabled = false;
+        }
+
+        if (data.correcta) {
+            // Respuesta correcta
+            if (feedbackCorrecto) feedbackCorrecto.style.display = 'flex';
+            if (feedbackIncorrecto) feedbackIncorrecto.style.display = 'none';
+
+            const explicacionCorrecto = feedbackCorrecto ? feedbackCorrecto.querySelector('.feedback-explicacion') : null;
+            if (explicacionCorrecto) explicacionCorrecto.textContent = data.explicacion || '¡Excelente trabajo!';
+
+            const botonSeleccionado = ejercicioContenido.querySelector('.opcion-btn.seleccionada');
+            if (botonSeleccionado) {
+                botonSeleccionado.classList.remove('seleccionada');
+                botonSeleccionado.classList.add('correcta');
+            }
+
+            const codigoEditorWrapper = ejercicioContenido.querySelector('.codigo-editor-wrapper');
+            const codigoEditor = ejercicioContenido.querySelector('.codigo-editor');
+            if (codigoEditorWrapper && codigoEditor) {
+                codigoEditorWrapper.classList.add('correcto');
+                codigoEditorWrapper.classList.remove('incorrecto');
+                codigoEditor.disabled = true;
+            }
+
+            respuestasCorrectas++;
+        } else {
+            // Respuesta incorrecta
+            if (feedbackIncorrecto) feedbackIncorrecto.style.display = 'flex';
+            if (feedbackCorrecto) feedbackCorrecto.style.display = 'none';
+
+            const respuestaCorrecta = feedbackIncorrecto ? feedbackIncorrecto.querySelector('.feedback-respuesta strong') : null;
+            if (respuestaCorrecta) respuestaCorrecta.textContent = data.respuesta_correcta || '';
+
+            const botonSeleccionado = ejercicioContenido.querySelector('.opcion-btn.seleccionada');
+            if (botonSeleccionado) {
+                botonSeleccionado.classList.remove('seleccionada');
+                botonSeleccionado.classList.add('incorrecta');
+            }
+
+            const codigoEditorWrapper = ejercicioContenido.querySelector('.codigo-editor-wrapper');
+            const codigoEditor = ejercicioContenido.querySelector('.codigo-editor');
+            if (codigoEditorWrapper && codigoEditor) {
+                codigoEditorWrapper.classList.add('incorrecto');
+                codigoEditorWrapper.classList.remove('correcto');
+                codigoEditor.disabled = true;
+            }
+
+            // Marcar la respuesta correcta (solo para opción múltiple)
+            ejercicioContenido.querySelectorAll('.opcion-btn').forEach(btn => {
+                const opcion = btn.getAttribute('data-opcion');
+                if (opcion && data.respuesta_correcta && opcion.trim().toLowerCase() === data.respuesta_correcta.trim().toLowerCase()) {
+                    btn.classList.add('correcta');
+                }
+            });
+        }
+
+        // Ocultar automáticamente después de 4 segundos con fade-out
+        setTimeout(() => {
+            if (feedbackContainer) {
+                feedbackContainer.classList.remove('show');
+                feedbackContainer.classList.add('hide');
+                setTimeout(() => {
+                    if (feedbackContainer.classList.contains('hide')) {
+                        feedbackContainer.style.display = 'none';
+                        feedbackContainer.classList.remove('hide');
+                    }
+                }, 300);
+            }
+        }, 4000);
+
+        actualizarProgreso();
+    }
+
+    function siguienteEjercicio() {
+        // Ocultar feedback independiente con fade-out
+        const feedbackContainer = document.getElementById('feedback-container');
+        if (feedbackContainer) {
+            feedbackContainer.classList.remove('show');
+            feedbackContainer.classList.add('hide');
+            setTimeout(() => {
+                if (feedbackContainer.classList.contains('hide')) {
+                    feedbackContainer.style.display = 'none';
+                    feedbackContainer.classList.remove('hide');
+                }
+            }, 300);
+        }
+
+        // Deshabilitar botón continuar del header para el siguiente ejercicio
+        const btnContinuarHeader = document.getElementById('btn-continuar-header');
+        if (btnContinuarHeader) {
+            btnContinuarHeader.disabled = true;
+        }
+
+        // Ocultar ejercicio actual
+        const ejercicioActualCard = document.getElementById(`ejercicio-${ejercicioActual}`);
+        if (ejercicioActualCard) {
+            ejercicioActualCard.style.display = 'none';
+        }
+
+        ejercicioActual++;
+
+        if (ejercicioActual > totalEjercicios) {
+            // Completar lección
+            completarLeccion();
+        } else {
+            // Mostrar siguiente ejercicio
+            const siguienteEjercicioCard = document.getElementById(`ejercicio-${ejercicioActual}`);
+            if (siguienteEjercicioCard) {
+                siguienteEjercicioCard.style.display = 'block';
+                const btnContinuarHeader = document.getElementById('btn-continuar-header');
+                if (btnContinuarHeader) {
+                    btnContinuarHeader.disabled = true;
+                }
+                actualizarProgreso();
+
+                // Inicializar numeración y resaltado para el nuevo ejercicio
+                const nuevoEditor = siguienteEjercicioCard.querySelector('.codigo-editor');
+                if (nuevoEditor) {
+                    setTimeout(() => {
+                        actualizarNumeros(nuevoEditor);
+                        aplicarResaltado(nuevoEditor);
+                    }, 100);
+                }
+            }
+        }
+    }
+
+    function completarLeccion() {
+        const btnContinuarHeader = document.getElementById('btn-continuar-header');
+        if (btnContinuarHeader) {
+            btnContinuarHeader.disabled = true;
+        }
+
+        console.log('Enviando calificación:', {
+            leccion_id: leccionId,
+            respuestas_correctas: respuestasCorrectas,
+            total_ejercicios: totalEjercicios
+        });
+
+        // Enviar petición para guardar calificación
+        fetch('/completar_leccion', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                leccion_id: leccionId,
+                respuestas_correctas: respuestasCorrectas,
+                total_ejercicios: totalEjercicios
+            })
+        })
+            .then(function (response) {
+                console.log('Fetch response status:', response.status);
+
+                // Si la respuesta es una redirección (probablemente al login)
+                if (response.redirected) {
+                    console.error('El servidor redirigió a:', response.url);
+                    window.location.href = response.url;
+                    return;
+                }
+
+                if (!response.ok) {
+                    return response.text().then(function (text) {
+                        console.error('Error del servidor (HTTP ' + response.status + '):', text);
+                        try {
+                            const errorData = JSON.parse(text);
+                            throw new Error(errorData.error || 'Error del servidor (' + response.status + ')');
+                        } catch (e) {
+                            throw new Error('Error del servidor (' + response.status + '). Consulta la consola.');
+                        }
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data) return; // Manejar caso de redirección
+
+                console.log('Respuesta del servidor:', data);
+
+                if (data.success) {
+                    // Ocultar ejercicios y header
+                    document.querySelector('.ejercicios-wrapper').style.display = 'none';
+                    document.querySelector('.leccion-header').style.display = 'none';
+
+                    // Actualizar UI de finalización
+                    const calificacionCirculo = document.getElementById('calificacion-circulo');
+                    const calificacionNumero = document.getElementById('calificacion-numero');
+                    const calificacionEstado = document.getElementById('calificacion-estado');
+                    const finalizacionMensaje = document.getElementById('finalizacion-mensaje');
+                    const btnReintentar = document.getElementById('btn-reintentar');
+
+                    if (calificacionNumero) calificacionNumero.textContent = data.calificacion.toFixed(1);
+
+                    if (data.aprobada) {
+                        if (calificacionCirculo) calificacionCirculo.className = 'calificacion-circulo aprobada';
+                        if (calificacionEstado) {
+                            calificacionEstado.className = 'calificacion-estado aprobada';
+                            calificacionEstado.textContent = '✓ APROBADA';
+                        }
+                        if (finalizacionMensaje) {
+                            finalizacionMensaje.className = 'finalizacion-mensaje aprobada';
+                            if (data.es_mejor) {
+                                finalizacionMensaje.innerHTML = '<strong>¡Excelente!</strong> Has aprobado la lección. Siguiente lección desbloqueada.';
+                            } else {
+                                finalizacionMensaje.innerHTML = 'Obtuviste ' + data.calificacion.toFixed(1) + '/10. Tu mejor calificación (' + data.calificacion_guardada + '/10) se mantiene.';
+                                finalizacionMensaje.className = 'finalizacion-mensaje mejor';
+                            }
+                        }
+                    } else {
+                        if (calificacionCirculo) calificacionCirculo.className = 'calificacion-circulo no-aprobada';
+                        if (calificacionEstado) {
+                            calificacionEstado.className = 'calificacion-estado no-aprobada';
+                            calificacionEstado.textContent = '⚠ NO APROBADA';
+                        }
+                        if (finalizacionMensaje) {
+                            finalizacionMensaje.className = 'finalizacion-mensaje no-aprobada';
+                            finalizacionMensaje.innerHTML = '<strong>Necesitas mínimo 7/10</strong> para desbloquear la siguiente lección. ¡Puedes intentarlo de nuevo cuantas veces quieras!';
+                        }
+                        if (btnReintentar) btnReintentar.classList.add('visible');
+                    }
+
+                    // Mostrar respuestas correctas
+                    const elRespCorrectas = document.getElementById('respuestas-correctas');
+                    const elTotalEjerFin = document.getElementById('total-ejercicios-fin');
+                    const elPorcentaje = document.getElementById('porcentaje-correctas');
+                    const elOverlay = document.getElementById('finalizacion-overlay');
+
+                    if (elRespCorrectas) elRespCorrectas.textContent = respuestasCorrectas;
+                    if (elTotalEjerFin) elTotalEjerFin.textContent = totalEjercicios;
+
+                    const porcentajePrecision = totalEjercicios > 0
+                        ? Math.round((respuestasCorrectas / totalEjercicios) * 100)
+                        : 0;
+                    if (elPorcentaje) elPorcentaje.textContent = porcentajePrecision + '%';
+
+                    if (elOverlay) elOverlay.style.display = 'flex';
+
+                    if (data.unidad_completada) {
+                        sessionStorage.setItem('unidad_completada', 'true');
+                        var unidadIdValue = "{{ leccion['unidad_id'] }}";
+                        if (unidadIdValue) {
+                            sessionStorage.setItem('unidad_id_completada', unidadIdValue);
+                        }
+                    }
+
+                    if (data.todas_unidades_completadas) {
+                        sessionStorage.setItem('todas_unidades_completadas', 'true');
+                    }
+                } else {
+                    console.error('Error lógico del servidor:', data.error);
+                    alert('Error: ' + (data.error || 'Ocurrió un error al procesar la calificación.'));
+                    if (btnContinuarHeader) btnContinuarHeader.disabled = false;
+                }
+            })
+            .catch(function (error) {
+                console.error('Error en fetch completion:', error);
+                alert('Hubo un contratiempo: ' + error.message);
+                if (btnContinuarHeader) btnContinuarHeader.disabled = false;
+            });
+    }
+
+    function actualizarProgreso() {
+        const porcentaje = (ejercicioActual / totalEjercicios) * 100;
+        document.getElementById('progreso-fill').style.width = porcentaje + '%';
+        document.getElementById('ejercicio-actual').textContent = ejercicioActual;
+    }
+
+    // Funciones para numeración de líneas
+    function actualizarNumeros(textarea) {
+        const ejercicioId = textarea.getAttribute('data-ejercicio-id');
+        const lineNumbers = document.getElementById(`line-numbers-${ejercicioId}`);
+        if (!lineNumbers) return;
+
+        const lineas = textarea.value.split('\n');
+        const numLineas = lineas.length || 1;
+
+        let numerosHTML = '';
+        for (let i = 1; i <= numLineas; i++) {
+            numerosHTML += i + '\n';
+        }
+
+        lineNumbers.textContent = numerosHTML;
+    }
+
+    function sincronizarScroll(textarea) {
+        const ejercicioId = textarea.getAttribute('data-ejercicio-id');
+        const lineNumbers = document.getElementById(`line-numbers-${ejercicioId}`);
+        if (lineNumbers) {
+            lineNumbers.scrollTop = textarea.scrollTop;
+        }
+    }
+
+    // Inicializar numeración al cargar la página
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.codigo-editor').forEach(textarea => {
+            actualizarNumeros(textarea);
+
+            textarea.addEventListener('input', function () {
+                actualizarNumeros(this);
+            });
+
+            textarea.addEventListener('scroll', function () {
+                sincronizarScroll(this);
+            });
+        });
+
+        // También inicializar cuando se muestra un nuevo ejercicio
+        const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                mutation.addedNodes.forEach(function (node) {
+                    if (node.nodeType === 1) {
+                        const textareas = node.querySelectorAll ? node.querySelectorAll('.codigo-editor') : [];
+                        textareas.forEach(textarea => {
+                            actualizarNumeros(textarea);
+                        });
+                    }
+                });
+            });
+        });
+
+        const ejerciciosWrapper = document.querySelector('.ejercicios-wrapper');
+        if (ejerciciosWrapper) {
+            observer.observe(ejerciciosWrapper, { childList: true, subtree: true });
+        }
+    });
+
+</script>
+{% endblock %}

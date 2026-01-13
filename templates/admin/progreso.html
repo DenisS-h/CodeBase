@@ -1,0 +1,814 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Progreso de Usuarios{% endblock %}
+
+{% block content %}
+<div class="progreso-page">
+    <div class="page-header">
+        <h2>📊 Progreso de Usuarios</h2>
+        <p class="page-subtitle">Visualiza el progreso, calificaciones y actividad de todos los estudiantes</p>
+    </div>
+
+    {% if usuarios_progreso %}
+    <div class="content-card">
+        <div class="search-container">
+            <div class="search-box-progreso">
+                <span class="search-icon-progreso">🔍</span>
+                <input type="text" id="searchUsuario" class="search-input-progreso" placeholder="Buscar por nombre, email o ID de usuario...">
+                <button class="clear-search" id="clearSearch" style="display: none;" onclick="limpiarBusqueda()">✕</button>
+            </div>
+            <div class="search-results-info" id="searchResultsInfo"></div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="progreso-table">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Email</th>
+                        <th>Lecciones Aprobadas</th>
+                        <th>Promedio General</th>
+                        <th>Promedio Final</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in usuarios_progreso %}
+                    <tr class="usuario-row" data-index="{{ loop.index0 }}">
+                        <td>
+                            <div class="usuario-cell">
+                                <div class="avatar-table">{{ item.usuario.nombre_completo[0].upper() }}</div>
+                                <div>
+                                    <div class="usuario-nombre">{{ item.usuario.nombre_completo }}</div>
+                                    <div class="usuario-id">#{{ item.usuario.id }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="email-cell">{{ item.usuario.email }}</span>
+                        </td>
+                        <td>
+                            <span class="stat-badge">
+                                {{ item.stats.lecciones_aprobadas or 0 }}/{{ item.stats.total_lecciones or 0 }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="promedio-badge">{{ "%.2f"|format(item.stats.promedio_general or 0) }}/10</span>
+                        </td>
+                        <td>
+                            <span class="promedio-final-badge-table">{{ "%.2f"|format(item.promedio_final) }}/10</span>
+                        </td>
+                        <td>
+                            <span class="badge {% if item.usuario.activo %}badge-success{% else %}badge-danger{% endif %}">
+                                <span class="badge-dot"></span>
+                                {{ 'Activo' if item.usuario.activo else 'Inactivo' }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr class="progreso-detalle-row" id="progreso-{{ loop.index0 }}" style="display: none;">
+                        <td colspan="6">
+                            <div class="progreso-detalle-content">
+                                <div class="detalle-header">
+                                    <h3>Progreso Detallado de {{ item.usuario.nombre_completo }}</h3>
+                                </div>
+
+                                <div class="stats-grid-progreso">
+                                    <div class="stat-item">
+                                        <span class="stat-label">Lecciones Aprobadas</span>
+                                        <span class="stat-value">{{ item.stats.lecciones_aprobadas or 0 }}/{{ item.stats.total_lecciones or 0 }}</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Lecciones Completadas</span>
+                                        <span class="stat-value">{{ item.stats.lecciones_completadas or 0 }}/{{ item.stats.total_lecciones or 0 }}</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Promedio General</span>
+                                        <span class="stat-value">{{ "%.2f"|format(item.stats.promedio_general or 0) }}/10</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Promedio Final</span>
+                                        <span class="stat-value">{{ "%.2f"|format(item.promedio_final) }}/10</span>
+                                    </div>
+                                </div>
+
+                                <div class="unidades-progreso">
+                                    <h4>Progreso por Unidad</h4>
+                                    {% for pu in item.progreso_unidades %}
+                                    <div class="unidad-progreso-item">
+                                        <div class="unidad-header-progreso">
+                                            <span class="unidad-numero-badge unidad-{{ pu.numero }}">Unidad {{ pu.numero }}</span>
+                                            <span class="unidad-titulo-progreso">{{ pu.titulo }}</span>
+                                        </div>
+                                        <div class="unidad-stats">
+                                            <div class="progreso-bar-unidad">
+                                                <div class="progreso-fill-unidad" style="width: {{ (pu.lecciones_aprobadas / pu.total_lecciones * 100) if pu.total_lecciones > 0 else 0 }}%; background: var(--color-unidad-{{ pu.numero }});"></div>
+                                            </div>
+                                            <div class="unidad-metrics">
+                                                <span>{{ pu.lecciones_aprobadas }}/{{ pu.total_lecciones }} lecciones</span>
+                                                <span class="promedio-unidad">Promedio: {{ "%.2f"|format(pu.promedio_unidad or 0) }}/10</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+
+                                <div class="calificaciones-detalle">
+                                    <h4>Calificaciones Detalladas por Lección</h4>
+                                    <div class="calificaciones-list">
+                                        {% for prog in item.progreso %}
+                                        {% if prog.completada %}
+                                        <div class="calificacion-item {% if prog.aprobada %}aprobada{% else %}no-aprobada{% endif %}">
+                                            <div class="calificacion-info">
+                                                <span class="leccion-nombre">{{ prog.titulo }}</span>
+                                                <span class="unidad-badge-small">U{{ prog.unidad_numero }}</span>
+                                            </div>
+                                            <div class="calificacion-meta">
+                                                <span class="calificacion-valor">{{ "%.2f"|format(prog.calificacion or 0) }}/10</span>
+                                                <span class="intentos-info">{{ prog.intentos }} intento{{ 's' if prog.intentos > 1 else '' }}</span>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        {% endfor %}
+                                        {% if not item.progreso|selectattr('completada')|list %}
+                                        <p class="empty-message">Este usuario aún no ha completado ninguna lección</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📚</div>
+        <h3>No hay usuarios registrados</h3>
+        <p>Aún no hay estudiantes en el sistema.</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .progreso-page {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-header h2 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.75rem;
+        color: #0f172a;
+    }
+
+    .page-subtitle {
+        color: #64748b;
+        margin: 0;
+    }
+
+    .content-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: var(--admin-card-shadow);
+        border: 1px solid #f1f5f9;
+        overflow: hidden;
+    }
+
+    .search-container {
+        padding: 1.5rem;
+        border-bottom: 1px solid #f1f5f9;
+        background: #fafafa;
+    }
+
+    .search-box-progreso {
+        position: relative;
+        display: flex;
+        align-items: center;
+        max-width: 600px;
+    }
+
+    .search-icon-progreso {
+        position: absolute;
+        left: 1rem;
+        color: #94a3b8;
+        font-size: 1.1rem;
+        pointer-events: none;
+    }
+
+    .search-input-progreso {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 3rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+        font-family: inherit;
+    }
+
+    .search-input-progreso:focus {
+        outline: none;
+        border-color: var(--admin-primary);
+        box-shadow: 0 0 0 4px rgba(88, 204, 2, 0.1);
+    }
+
+    .clear-search {
+        position: absolute;
+        right: 0.75rem;
+        background: #e2e8f0;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .clear-search:hover {
+        background: #cbd5e1;
+        color: #0f172a;
+    }
+
+    .search-results-info {
+        margin-top: 0.75rem;
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+
+    .search-results-info strong {
+        color: var(--admin-primary);
+        font-weight: 600;
+    }
+
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .progreso-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .progreso-table thead {
+        background: #f8fafc;
+    }
+
+    .progreso-table th {
+        text-align: left;
+        padding: 1rem 1.5rem;
+        color: #64748b;
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .progreso-table td {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+
+    .usuario-row {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .usuario-row:hover {
+        background: #f8fafc;
+    }
+
+    .usuario-row.expanded {
+        background: rgba(88, 204, 2, 0.05);
+    }
+
+    .usuario-cell {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .avatar-table {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--admin-primary), var(--admin-primary-dark));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+
+    .usuario-nombre {
+        font-weight: 600;
+        color: #0f172a;
+        font-size: 0.95rem;
+    }
+
+    .usuario-id {
+        font-size: 0.75rem;
+        color: #94a3b8;
+    }
+
+    .email-cell {
+        color: #475569;
+        font-size: 0.875rem;
+    }
+
+    .stat-badge {
+        display: inline-block;
+        padding: 0.35rem 0.85rem;
+        border-radius: 50px;
+        background: #f1f5f9;
+        color: #475569;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .promedio-badge {
+        display: inline-block;
+        padding: 0.35rem 0.85rem;
+        border-radius: 50px;
+        background: #ecfdf5;
+        color: #059669;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .promedio-final-badge-table {
+        display: inline-block;
+        padding: 0.35rem 0.85rem;
+        border-radius: 50px;
+        background: rgba(88, 204, 2, 0.1);
+        color: var(--admin-primary);
+        font-weight: 700;
+        font-size: 0.875rem;
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.85rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .badge-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+    }
+
+    .badge-success {
+        background: #ecfdf5;
+        color: #059669;
+    }
+
+    .badge-success .badge-dot {
+        background: #059669;
+    }
+
+    .badge-danger {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+
+    .badge-danger .badge-dot {
+        background: #dc2626;
+    }
+
+    .progreso-detalle-row {
+        background: #fafafa;
+    }
+
+    .progreso-detalle-row td {
+        padding: 0;
+    }
+
+    .progreso-detalle-content {
+        padding: 2rem;
+    }
+
+    .detalle-header {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .detalle-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        color: #0f172a;
+    }
+
+    .stats-grid-progreso {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 12px;
+    }
+
+    .stat-label {
+        display: block;
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        display: block;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .unidades-progreso {
+        margin-bottom: 2rem;
+    }
+
+    .unidades-progreso h4 {
+        margin: 0 0 1rem 0;
+        font-size: 1rem;
+        color: #475569;
+    }
+
+    .unidad-progreso-item {
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 12px;
+    }
+
+    .unidad-header-progreso {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .unidad-numero-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: white;
+    }
+
+    .unidad-1 { background: #58cc02; }
+    .unidad-2 { background: #4CAF50; }
+    .unidad-3 { background: #FFC107; }
+    .unidad-4 { background: #FF9800; }
+    .unidad-5 { background: #2196F3; }
+
+    .unidad-titulo-progreso {
+        font-size: 0.875rem;
+        color: #475569;
+        font-weight: 600;
+    }
+
+    .progreso-bar-unidad {
+        height: 8px;
+        background: #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
+
+    .progreso-fill-unidad {
+        height: 100%;
+        transition: width 0.3s ease;
+    }
+
+    .unidad-metrics {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .promedio-unidad {
+        font-weight: 600;
+        color: #475569;
+    }
+
+    .calificaciones-detalle h4 {
+        margin: 0 0 1rem 0;
+        font-size: 1rem;
+        color: #475569;
+    }
+
+    .calificaciones-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .calificacion-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        border-radius: 8px;
+        border-left: 4px solid;
+    }
+
+    .calificacion-item.aprobada {
+        background: #ecfdf5;
+        border-left-color: #58cc02;
+    }
+
+    .calificacion-item.no-aprobada {
+        background: #fef2f2;
+        border-left-color: #ef4444;
+    }
+
+    .calificacion-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex: 1;
+    }
+
+    .leccion-nombre {
+        font-size: 0.875rem;
+        color: #0f172a;
+        font-weight: 500;
+    }
+
+    .unidad-badge-small {
+        padding: 0.125rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.625rem;
+        font-weight: 700;
+        background: #e2e8f0;
+        color: #475569;
+    }
+
+    .calificacion-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .calificacion-valor {
+        font-weight: 700;
+        font-size: 0.875rem;
+    }
+
+    .calificacion-item.aprobada .calificacion-valor {
+        color: #58cc02;
+    }
+
+    .calificacion-item.no-aprobada .calificacion-valor {
+        color: #ef4444;
+    }
+
+    .intentos-info {
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 20px;
+        box-shadow: var(--admin-card-shadow);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h3 {
+        margin: 0 0 0.5rem 0;
+        color: #0f172a;
+    }
+
+    .empty-state p {
+        color: #64748b;
+        margin: 0;
+    }
+
+    .empty-message {
+        color: #94a3b8;
+        font-style: italic;
+        text-align: center;
+        padding: 1rem;
+    }
+
+    :root {
+        --color-unidad-1: #58cc02;
+        --color-unidad-2: #4CAF50;
+        --color-unidad-3: #FFC107;
+        --color-unidad-4: #FF9800;
+        --color-unidad-5: #2196F3;
+    }
+    
+    /* Estilos responsivos */
+    @media (max-width: 768px) {
+        .page-header h2 {
+            font-size: 1.4rem;
+        }
+        
+        .search-container {
+            padding: 1rem;
+        }
+        
+        .search-input-progreso {
+            font-size: 0.9rem;
+        }
+        
+        .progreso-table {
+            min-width: 800px;
+        }
+        
+        .progreso-table th,
+        .progreso-table td {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.85rem;
+        }
+        
+        .usuario-cell {
+            min-width: 140px;
+        }
+        
+        .usuario-nombre {
+            font-size: 0.85rem;
+        }
+        
+        .stats-grid-progreso {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+        
+        .progreso-detalle-content {
+            padding: 1rem;
+        }
+        
+        .detalle-header h3 {
+            font-size: 1.1rem;
+        }
+        
+        .calificaciones-list {
+            gap: 0.5rem;
+        }
+        
+        .calificacion-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        
+        .calificacion-meta {
+            width: 100%;
+            justify-content: space-between;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .stats-grid-progreso {
+            grid-template-columns: 1fr;
+        }
+        
+        .unidad-progreso-item {
+            padding: 0.75rem;
+        }
+        
+        .unidad-header-progreso {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+        
+        .unidad-metrics {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const usuarioRows = document.querySelectorAll('.usuario-row');
+        const searchInput = document.getElementById('searchUsuario');
+        const clearButton = document.getElementById('clearSearch');
+        const resultsInfo = document.getElementById('searchResultsInfo');
+        const totalUsuarios = usuarioRows.length;
+        
+        // Función para expandir/colapsar progreso
+        usuarioRows.forEach(row => {
+            row.addEventListener('click', function() {
+                const index = this.dataset.index;
+                const detalleRow = document.getElementById(`progreso-${index}`);
+                
+                if (detalleRow.style.display === 'none' || detalleRow.style.display === '') {
+                    // Cerrar otros detalles abiertos
+                    document.querySelectorAll('.progreso-detalle-row').forEach(r => {
+                        if (r.id !== `progreso-${index}`) {
+                            r.style.display = 'none';
+                        }
+                    });
+                    document.querySelectorAll('.usuario-row').forEach(r => {
+                        r.classList.remove('expanded');
+                    });
+                    
+                    // Abrir este detalle
+                    detalleRow.style.display = 'table-row';
+                    this.classList.add('expanded');
+                } else {
+                    // Cerrar este detalle
+                    detalleRow.style.display = 'none';
+                    this.classList.remove('expanded');
+                }
+            });
+        });
+
+        // Función de búsqueda en tiempo real
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            
+            // Mostrar/ocultar botón de limpiar
+            if (searchTerm.length > 0) {
+                clearButton.style.display = 'flex';
+            } else {
+                clearButton.style.display = 'none';
+            }
+            
+            let visibleCount = 0;
+            
+            usuarioRows.forEach(row => {
+                const index = row.dataset.index;
+                const detalleRow = document.getElementById(`progreso-${index}`);
+                
+                // Obtener texto de la fila para buscar
+                const nombre = row.querySelector('.usuario-nombre').textContent.toLowerCase();
+                const email = row.querySelector('.email-cell').textContent.toLowerCase();
+                const id = row.querySelector('.usuario-id').textContent.toLowerCase();
+                
+                // Buscar en nombre, email o ID
+                const matches = nombre.includes(searchTerm) || 
+                              email.includes(searchTerm) || 
+                              id.includes(searchTerm);
+                
+                if (matches || searchTerm === '') {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                    // Ocultar detalle si está abierto
+                    if (detalleRow) {
+                        detalleRow.style.display = 'none';
+                        row.classList.remove('expanded');
+                    }
+                }
+            });
+            
+            // Actualizar información de resultados
+            if (searchTerm.length > 0) {
+                resultsInfo.innerHTML = `Mostrando <strong>${visibleCount}</strong> de <strong>${totalUsuarios}</strong> usuarios`;
+            } else {
+                resultsInfo.innerHTML = '';
+            }
+        });
+
+        // Función para limpiar búsqueda
+        window.limpiarBusqueda = function() {
+            searchInput.value = '';
+            clearButton.style.display = 'none';
+            resultsInfo.innerHTML = '';
+            
+            // Mostrar todas las filas
+            usuarioRows.forEach(row => {
+                row.style.display = '';
+            });
+        };
+    });
+</script>
+{% endblock %}
+

@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - CodeBase</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        :root {
+            --admin-sidebar-width: 280px;
+            --admin-primary: #58cc02;
+            --admin-primary-dark: #4CAF50;
+            --admin-bg: #f8fafc;
+            --admin-card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--admin-bg);
+            color: #1e293b;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .admin-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Sidebar Modernizada */
+        .admin-sidebar {
+            width: var(--admin-sidebar-width);
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 1.5rem;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        .admin-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 3rem;
+            padding: 0 0.5rem;
+        }
+
+        .admin-logo svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .admin-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex-grow: 1;
+        }
+
+        .admin-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.875rem 1rem;
+            border-radius: 12px;
+            color: #64748b;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .admin-item:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+            transform: translateX(4px);
+        }
+
+        .admin-item.active {
+            background: rgba(88, 204, 2, 0.1);
+            color: var(--admin-primary);
+        }
+
+        .admin-item.active .icon-box {
+            background: var(--admin-primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(88, 204, 2, 0.3);
+        }
+
+        .icon-box {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: #f1f5f9;
+            font-size: 1.25rem;
+            transition: all 0.2s;
+        }
+
+        .admin-item:hover .icon-box {
+            background: #e2e8f0;
+        }
+
+        .admin-footer {
+            margin-top: auto;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 1.5rem;
+        }
+
+        /* Contenido Principal */
+        .admin-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .admin-header {
+            height: 80px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2.5rem;
+            flex-shrink: 0;
+        }
+
+        .header-title h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--admin-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+
+        .user-info-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .user-role {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .admin-content {
+            flex: 1;
+            padding: 2.5rem;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        /* Flash Messages */
+        .flash-messages-container {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            pointer-events: none;
+        }
+
+        .flash-message {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 300px;
+            border-left: 4px solid #cbd5e1;
+            animation: slideIn 0.3s ease-out;
+            pointer-events: auto;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .flash-message.success {
+            border-left-color: var(--admin-primary);
+        }
+
+        .flash-message.error {
+            border-left-color: #ef4444;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #cbd5e1;
+        }
+
+        /* ============================================
+           ESTILOS RESPONSIVOS ADMIN
+           ============================================ */
+        
+        /* Botón hamburguesa móvil */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            padding: 0.5rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        
+        .mobile-menu-btn:hover {
+            background: #f1f5f9;
+        }
+        
+        .mobile-menu-btn svg {
+            width: 24px;
+            height: 24px;
+            color: #64748b;
+        }
+        
+        /* Overlay para cerrar sidebar en móvil */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 90;
+        }
+        
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        /* Tablets */
+        @media (max-width: 1024px) {
+            .admin-sidebar {
+                width: 240px;
+                padding: 1.5rem 1rem;
+            }
+            
+            .admin-logo {
+                font-size: 1.25rem;
+                margin-bottom: 2rem;
+            }
+            
+            .admin-item span {
+                font-size: 0.9rem;
+            }
+            
+            .admin-content {
+                padding: 1.5rem;
+            }
+            
+            .admin-header {
+                padding: 0 1.5rem;
+            }
+        }
+
+        /* Móviles */
+        @media (max-width: 768px) {
+            body {
+                overflow: auto;
+            }
+            
+            .admin-container {
+                flex-direction: column;
+                height: auto;
+                min-height: 100vh;
+            }
+            
+            .mobile-menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .admin-sidebar {
+                position: fixed;
+                left: -100%;
+                top: 0;
+                height: 100vh;
+                width: 280px;
+                z-index: 100;
+                transition: left 0.3s ease;
+                box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+            }
+            
+            .admin-sidebar.active {
+                left: 0;
+            }
+            
+            .admin-main {
+                width: 100%;
+            }
+            
+            .admin-header {
+                height: auto;
+                padding: 1rem;
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+            
+            .header-title {
+                order: 2;
+                width: 100%;
+            }
+            
+            .header-title h2 {
+                font-size: 1.1rem;
+            }
+            
+            .header-actions {
+                order: 1;
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .user-profile {
+                padding: 0.4rem 0.75rem;
+            }
+            
+            .user-info-text {
+                display: none;
+            }
+            
+            .admin-content {
+                padding: 1rem;
+                overflow-y: visible;
+            }
+            
+            /* Tablas responsivas */
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .premium-table {
+                min-width: 600px;
+            }
+            
+            .premium-table th,
+            .premium-table td {
+                padding: 0.875rem 1rem;
+                font-size: 0.85rem;
+            }
+            
+            .user-cell {
+                min-width: 150px;
+            }
+            
+            .cell-name {
+                font-size: 0.875rem;
+            }
+            
+            .action-buttons {
+                flex-wrap: nowrap;
+            }
+            
+            .action-btn {
+                width: 32px;
+                height: 32px;
+            }
+            
+            /* Cards del dashboard */
+            .dashboard-stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
+            
+            .stat-card-admin {
+                padding: 1rem;
+            }
+            
+            /* Modal responsivo */
+            .modal-card {
+                width: 95%;
+                max-width: 400px;
+                margin: 1rem;
+            }
+            
+            .modal-header,
+            .modal-body,
+            .modal-footer {
+                padding: 1rem 1.25rem;
+            }
+            
+            /* Flash messages */
+            .flash-messages-container {
+                top: 1rem;
+                right: 1rem;
+                left: 1rem;
+            }
+            
+            .flash-message {
+                min-width: auto;
+                width: 100%;
+            }
+        }
+
+        /* Móviles pequeños */
+        @media (max-width: 480px) {
+            .admin-header {
+                padding: 0.75rem;
+            }
+            
+            .header-title h2 {
+                font-size: 1rem;
+            }
+            
+            .admin-content {
+                padding: 0.75rem;
+            }
+            
+            .content-card {
+                border-radius: 14px;
+            }
+            
+            .card-header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+            
+            .card-header h3 {
+                font-size: 1rem;
+            }
+            
+            .search-box input {
+                width: 100%;
+            }
+            
+            .premium-table th,
+            .premium-table td {
+                padding: 0.75rem;
+            }
+            
+            .badge {
+                font-size: 0.7rem;
+                padding: 0.25rem 0.6rem;
+            }
+            
+            .racha-cell {
+                padding: 0.3rem 0.5rem;
+            }
+            
+            .racha-dias {
+                font-size: 0.9rem;
+            }
+            
+            .racha-label {
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <div class="admin-container">
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="admin-logo">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 6L4 12L8 18" stroke="#58cc02" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M16 6L20 12L16 18" stroke="#58cc02" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+                <span>CodeBase Admin</span>
+            </div>
+
+            <nav class="admin-menu">
+                <a href="{{ url_for('admin_dashboard') }}"
+                    class="admin-item {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                    <div class="icon-box">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="9"></rect>
+                            <rect x="14" y="3" width="7" height="5"></rect>
+                            <rect x="14" y="12" width="7" height="9"></rect>
+                            <rect x="3" y="16" width="7" height="5"></rect>
+                        </svg>
+                    </div>
+                    <span>Panel del Administrador</span>
+                </a>
+                <a href="{{ url_for('admin_usuarios') }}"
+                    class="admin-item {% if request.endpoint == 'admin_usuarios' %}active{% endif %}">
+                    <div class="icon-box">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <span>Usuarios</span>
+                </a>
+                <a href="{{ url_for('admin_progreso') }}"
+                    class="admin-item {% if request.endpoint == 'admin_progreso' %}active{% endif %}">
+                    <div class="icon-box">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 3v18h18"></path>
+                            <path d="M18 17V9"></path>
+                            <path d="M13 17V5"></path>
+                            <path d="M8 17v-3"></path>
+                        </svg>
+                    </div>
+                    <span>Progreso de Usuarios</span>
+                </a>
+                <a href="{{ url_for('admin_contenido') }}"
+                    class="admin-item {% if request.endpoint == 'admin_contenido' %}active{% endif %}">
+                    <div class="icon-box">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </div>
+                    <span>Gestionar Contenido</span>
+                </a>
+            </nav>
+
+            <div class="admin-footer">
+                <a href="{{ url_for('logout') }}" class="admin-item">
+                    <div class="icon-box">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </div>
+                    <span>Cerrar Sesión</span>
+                </a>
+            </div>
+        </aside>
+
+        <main class="admin-main">
+            <header class="admin-header">
+                <div class="header-actions">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
+                    <div class="user-profile">
+                        <div class="user-avatar">{{ session['nombre'][0].upper() }}</div>
+                        <div class="user-info-text">
+                            <span class="user-name">{{ session['nombre'] }}</span>
+                            <span class="user-role">Administrador</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-title">
+                    <h2>{% block title %}Panel de Control{% endblock %}</h2>
+                </div>
+            </header>
+
+            <div class="admin-content">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <div class="flash-messages-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash-message {{ category }}">
+            <span>{% if category == 'success' %}✅{% else %}❌{% endif %}</span>
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <script>
+        // Auto-cerrar mensajes flash
+        setTimeout(() => {
+            const messages = document.querySelectorAll('.flash-message');
+            messages.forEach(msg => {
+                msg.style.transform = 'translateX(100%)';
+                msg.style.opacity = '0';
+                msg.style.transition = 'all 0.5s ease';
+                setTimeout(() => msg.remove(), 500);
+            });
+        }, 4000);
+        
+        // Toggle sidebar en móvil
+        function toggleSidebar() {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            
+            // Prevenir scroll del body cuando el sidebar está abierto
+            if (sidebar.classList.contains('active')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        }
+        
+        // Cerrar sidebar al hacer clic en un enlace del menú (móvil)
+        document.querySelectorAll('.admin-item').forEach(item => {
+            item.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    toggleSidebar();
+                }
+            });
+        });
+        
+        // Cerrar sidebar al redimensionar a desktop
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                const sidebar = document.getElementById('adminSidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

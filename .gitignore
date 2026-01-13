@@ -1,0 +1,29 @@
+# Archivos de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+instance/
+
+# Entorno virtual
+venv/
+env/
+ENV/
+
+# Variables de entorno (credenciales sensibles)
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Base de datos
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log

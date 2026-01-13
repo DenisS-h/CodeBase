@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background-color: #f7f7f7;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .logo span {
+            color: #58cc02;
+        }
+
+        .content {
+            background-color: #ffffff;
+            padding: 30px;
+            border: 1px solid #eee;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+        }
+
+        .password-box {
+            background-color: #f0f0f0;
+            border: 2px dashed #ccc;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            border-radius: 8px;
+            letter-spacing: 2px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .alert {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ffeeba;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo"><span>&lt;&gt;</span> CodeBase</div>
+        </div>
+        <div class="content">
+            <h2>Recuperación de Contraseña</h2>
+            <p>Hola <strong>{{ nombre }}</strong>,</p>
+            <p>Hemos recibido una solicitud para restablecer tu contraseña en CodeBase. Aquí tienes tu nueva contraseña
+                temporal:</p>
+
+            <div class="password-box">
+                {{ password_temporal }}
+            </div>
+
+            <p>Por favor, usa esta contraseña para iniciar sesión y te recomendamos cambiarla inmediatamente desde tu
+                perfil.</p>
+
+            <div class="alert">
+                <strong>Importante:</strong> Si no solicitaste este cambio, por favor contacta al administrador
+                inmediatamente.
+            </div>
+        </div>
+        <div class="footer">
+            <p>&copy; 2024 CodeBase. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+
+</html>

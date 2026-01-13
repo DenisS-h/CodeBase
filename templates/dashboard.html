@@ -1,0 +1,539 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Aprendizaje - CodeBase{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <div class="header-content">
+            <h1>¡Hola, {{ usuario['nombre_completo'].split()[0] }}! 👋</h1>
+            <p class="header-subtitle">Continúa tu camino en la programación</p>
+        </div>
+
+        <div class="stats-cards">
+            <div class="stat-card">
+                <div class="stat-card-icon">🔥</div>
+                <div class="stat-card-content">
+                    <div class="stat-card-value">{{ usuario['racha_dias'] }}</div>
+                    <div class="stat-card-label">Días de racha</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-icon">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+                            fill="{{ '#10B981' if promedio_final >= 7 else '#F59E0B' if promedio_final > 0 else '#9CA3AF' }}"
+                            stroke="{{ '#10B981' if promedio_final >= 7 else '#F59E0B' if promedio_final > 0 else '#9CA3AF' }}"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <div class="stat-card-content">
+                    <div class="stat-card-value">{{ "%.1f"|format(promedio_final) }}/10</div>
+                    <div class="stat-card-label">Promedio General</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-icon">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 19.5C4 18.837 4.263 18.201 4.732 17.732C5.201 17.263 5.837 17 6.5 17H20"
+                            stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <path
+                            d="M6.5 2H20V22H6.5C5.837 22 5.201 21.737 4.732 21.268C4.263 20.799 4 20.163 4 19.5V4.5C4 3.837 4.263 3.201 4.732 2.732C5.201 2.263 5.837 2 6.5 2Z"
+                            stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M8 7H16" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" />
+                        <path d="M8 11H16" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <div class="stat-card-content">
+                    <div class="stat-card-value">{{ stats['lecciones_aprobadas'] or 0 }}/{{ stats['total_lecciones'] }}
+                    </div>
+                    <div class="stat-card-label">Lecciones Aprobadas</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="learning-path">
+        <h2 class="section-title">Tu ruta de aprendizaje</h2>
+
+        <!-- Leyenda del sistema de calificaciones -->
+        <div class="calificaciones-leyenda mb-4 p-3 bg-light rounded-3 border">
+            <div class="d-flex flex-wrap justify-content-center gap-4 small">
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-success me-2">✓</span>
+                    <span>Aprobada (≥7/10)</span>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-warning me-2">⚠</span>
+                    <span>No aprobada (&lt;7/10)</span>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-secondary me-2">🔒</span>
+                    <span>Bloqueada</span>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-primary me-2">→</span>
+                    <span>Disponible</span>
+                </div>
+            </div>
+        </div>
+
+        {% for unidad in unidades %}
+        <div class="unidad-section">
+            <div class="unidad-header">
+                <div class="unidad-info">
+                    <div class="unidad-badge">Unidad {{ unidad['numero'] }}</div>
+                    <h3 class="unidad-titulo">{{ unidad['titulo'] }}</h3>
+                    <p class="unidad-descripcion">{{ unidad['descripcion'] }}</p>
+                </div>
+                {% if progreso_unidades[unidad['id']] %}
+                <div class="unidad-promedio">
+                    <span
+                        class="badge {{ 'bg-success' if progreso_unidades[unidad['id']]['unidad_completada'] else 'bg-secondary' }} fs-6">
+                        Promedio: {{ "%.1f"|format(progreso_unidades[unidad['id']]['promedio_unidad'] or 0) }}/10
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="lecciones-grid">
+                {% set lecciones = unidades_progreso[unidad['id']] %}
+                {% if lecciones %}
+                {% for leccion in lecciones %}
+                <div
+                    class="leccion-card {% if leccion['aprobada'] %}completada{% elif not leccion['desbloqueada'] %}bloqueada{% endif %}">
+                    <div class="leccion-icon">
+                        {% if leccion['aprobada'] %}
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 6L9 17L4 12" stroke="white" stroke-width="2.5" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                        {% elif leccion['completada'] and not leccion['aprobada'] %}
+                        <span style="font-size: 20px;">⚠️</span>
+                        {% elif not leccion['desbloqueada'] %}
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="5" y="11" width="14" height="10" rx="2" stroke="#9CA3AF" stroke-width="2" />
+                            <path d="M9 11V7C9 5.34315 10.3431 4 12 4C13.6569 4 15 5.34315 15 7V11" stroke="#9CA3AF"
+                                stroke-width="2" />
+                        </svg>
+                        {% else %}
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="6" y="6" width="12" height="12" rx="2" stroke="#9CA3AF" stroke-width="2" />
+                            <path d="M9 9L15 15M15 9L9 15" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                        {% endif %}
+                    </div>
+
+                    <div class="leccion-content">
+                        <h4 class="leccion-titulo">{{ leccion['titulo'] }}</h4>
+                        <p class="leccion-descripcion">{{ leccion['descripcion'] }}</p>
+
+                        <div class="leccion-footer">
+                            {% if leccion['aprobada'] %}
+                            <div class="leccion-calificacion">
+                                <span class="calificacion-badge aprobada">
+                                    ✓ {{ "%.1f"|format(leccion['calificacion'] or 0) }}/10
+                                </span>
+                                {% if leccion['intentos'] > 0 %}
+                                <span class="intentos-badge">{{ leccion['intentos'] }} intento{{ 's' if
+                                    leccion['intentos'] > 1 else '' }}</span>
+                                {% endif %}
+                            </div>
+                            <a href="{{ url_for('leccion', leccion_id=leccion['id']) }}"
+                                class="btn-secondary btn-small">
+                                Repasar
+                            </a>
+                            {% elif leccion['completada'] and not leccion['aprobada'] %}
+                            <div class="leccion-calificacion">
+                                <span class="calificacion-badge no-aprobada">
+                                    ⚠ {{ "%.1f"|format(leccion['calificacion'] or 0) }}/10
+                                </span>
+                                <span class="intentos-badge">{{ leccion['intentos'] }} intento{{ 's' if
+                                    leccion['intentos'] > 1 else '' }}</span>
+                            </div>
+                            <a href="{{ url_for('leccion', leccion_id=leccion['id']) }}" class="btn-warning btn-small">
+                                Reintentar
+                            </a>
+                            {% elif not leccion['desbloqueada'] %}
+                            <div class="leccion-requisito">
+                                <span class="requisito-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <rect x="5" y="11" width="14" height="10" rx="2" stroke="#9CA3AF"
+                                            stroke-width="2" />
+                                        <path d="M9 11V7C9 5.34315 10.3431 4 12 4C13.6569 4 15 5.34315 15 7V11"
+                                            stroke="#9CA3AF" stroke-width="2" />
+                                    </svg>
+                                </span>
+                                <span class="small">Requiere 7/10 en la anterior</span>
+                            </div>
+                            <button class="btn-primary btn-small disabled"
+                                onclick="alert('{{ leccion['mensaje_bloqueo'] }}'); return false;"
+                                title="{{ leccion['mensaje_bloqueo'] }}">
+                                Bloqueada
+                            </button>
+                            {% else %}
+                            <div class="leccion-requisito">
+                                <span class="requisito-disponible">¡Disponible!</span>
+                            </div>
+                            <a href="{{ url_for('leccion', leccion_id=leccion['id']) }}" class="btn-primary btn-small">
+                                Comenzar
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="unidad-sin-lecciones">
+                    <div class="sin-lecciones-icon">📚</div>
+                    <p class="sin-lecciones-texto">No hay lecciones disponibles aún en esta unidad.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal de Felicitaciones -->
+<div class="celebration-modal" id="celebration-modal">
+    <div class="celebration-content">
+        <div class="confetti-container">
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+        </div>
+        <img src="{{ url_for('static', filename='images/rencorosa.png') }}" alt="¡Felicidades!"
+            class="celebration-image">
+        <h2 class="celebration-title">¡Felicidades! 🎉</h2>
+        <p class="celebration-message">¡Lo lograste! Has completado todas las unidades del curso con un promedio final
+            de <strong>{{ "%.1f"|format(promedio_final) }}/10</strong>. ¡Eres increíble!</p>
+        <button class="celebration-button" onclick="cerrarCelebracion()">Continuar</button>
+    </div>
+</div>
+
+<script>
+    // Datos de las unidades para el camino vertical
+    const unidadesData = [
+        {% for unidad in unidades %}
+    {
+        id: { { unidad['id'] } },
+        numero: { { unidad['numero'] } },
+        titulo: "{{ unidad['titulo'] }}",
+            completada: { { 1 if progreso_unidades[unidad['id']]['unidad_completada'] else 0 } }
+    } {% if not loop.last %}, {% endif %}
+    {% endfor %}
+];
+
+    const todasCompletadas = {{ 1 if todas_unidades_completadas else 0 }};
+
+    // Renderizar camino vertical en el sidebar
+    function renderizarCaminoVertical() {
+        const container = document.getElementById('vertical-path-container');
+        if (!container) return;
+
+        let html = '<div class="vertical-path-track">';
+
+        unidadesData.forEach((unidad, index) => {
+            const isLast = index === unidadesData.length - 1;
+            const isCompleted = unidad.completada === 1;
+            const prevCompleted = index > 0 ? unidadesData[index - 1].completada === 1 : false;
+
+            // Nodo de unidad
+            html += `
+            <div class="vertical-path-node-wrapper" data-unidad-id="${unidad.id}" data-unidad-numero="${unidad.numero}">
+                <div class="vertical-path-node ${isCompleted ? 'completed' : ''}" 
+                     data-unidad-id="${unidad.id}"
+                     data-unidad-numero="${unidad.numero}">
+                    ${isCompleted ? `
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 6L9 17L4 12" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    ` : `
+                        <span class="vertical-path-node-number">${unidad.numero}</span>
+                    `}
+                </div>
+                ${!isLast ? `
+                    <svg class="vertical-path-connector ${isCompleted ? 'completed' : ''}" 
+                         viewBox="0 0 100 120" preserveAspectRatio="none">
+                        <path d="M 50 0 Q 50 30 50 60 T 50 120" 
+                              stroke="${isCompleted ? '#58cc02' : '#e5e5e5'}" 
+                              stroke-width="4" 
+                              fill="none" 
+                              stroke-linecap="round"/>
+                    </svg>
+                ` : ''}
+            </div>
+        `;
+        });
+
+        // Meta final
+        html += `
+        <div class="vertical-path-node-wrapper">
+            <div class="vertical-path-node vertical-path-goal ${todasCompletadas ? 'completed' : ''}" id="vertical-path-goal">
+                ${todasCompletadas ? `
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="white"/>
+                    </svg>
+                ` : `
+                    <span class="vertical-path-goal-icon">🏆</span>
+                `}
+            </div>
+        </div>
+    `;
+
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    // Verificar si todas las unidades están completadas al cargar la página
+    document.addEventListener('DOMContentLoaded', function () {
+        renderizarCaminoVertical();
+
+        {% if todas_unidades_completadas %}
+        // Mostrar modal de felicitaciones después de un pequeño delay
+        setTimeout(function () {
+            mostrarCelebracion();
+        }, 500);
+        {% endif %}
+
+        // Verificar si se completó una unidad recientemente (desde localStorage)
+        const unidadCompletada = sessionStorage.getItem('unidad_completada');
+        const unidadId = sessionStorage.getItem('unidad_id_completada');
+
+        if (unidadCompletada === 'true' && unidadId) {
+            sessionStorage.removeItem('unidad_completada');
+            sessionStorage.removeItem('unidad_id_completada');
+
+            // Mostrar animación de unidad completada después de un pequeño delay
+            setTimeout(() => {
+                mostrarAnimacionUnidadCompletada(parseInt(unidadId));
+            }, 300);
+
+            // Verificar si ahora todas están completadas
+            {% if todas_unidades_completadas %}
+            setTimeout(function () {
+                mostrarCelebracion();
+            }, 3000);
+            {% endif %}
+        }
+    });
+
+    function mostrarCelebracion() {
+        const modal = document.getElementById('celebration-modal');
+        if (modal) {
+            modal.classList.add('show');
+            // Prevenir scroll del body cuando el modal está abierto
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function cerrarCelebracion() {
+        const modal = document.getElementById('celebration-modal');
+        if (modal) {
+            modal.classList.remove('show');
+            // Restaurar scroll del body
+            document.body.style.overflow = 'auto';
+        }
+    }
+
+    // Renderizar camino vertical en el overlay del centro
+    function renderizarCaminoEnOverlay(unidadCompletadaId) {
+        const container = document.getElementById('path-animation-container');
+        if (!container) return;
+
+        let html = '<div class="vertical-path-track" style="min-height: 400px;">';
+
+        unidadesData.forEach(function (unidad, index) {
+            const isLast = index === unidadesData.length - 1;
+            const isCompleted = unidad.completada === 1 || unidad.id === unidadCompletadaId;
+            const isJustCompleted = unidad.id === unidadCompletadaId;
+            const completedClass = isCompleted ? 'completed' : '';
+            const justCompletedClass = isJustCompleted ? 'just-completed' : '';
+            const nodeClass = 'vertical-path-node ' + completedClass + ' ' + justCompletedClass;
+
+            // Nodo de unidad
+            html += '<div class="vertical-path-node-wrapper" data-unidad-id="' + unidad.id + '" data-unidad-numero="' + unidad.numero + '">';
+            html += '<div class="' + nodeClass.trim() + '" data-unidad-id="' + unidad.id + '" data-unidad-numero="' + unidad.numero + '">';
+
+            if (isCompleted) {
+                html += '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">';
+                html += '<path d="M20 6L9 17L4 12" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+                html += '</svg>';
+            } else {
+                html += '<span class="vertical-path-node-number">' + unidad.numero + '</span>';
+            }
+
+            html += '</div>';
+
+            if (!isLast) {
+                const connectorClass = isCompleted ? 'vertical-path-connector completed' : 'vertical-path-connector';
+                const strokeColor = isCompleted ? '#58cc02' : '#e5e5e5';
+                html += '<svg class="' + connectorClass + '" viewBox="0 0 100 120" preserveAspectRatio="none">';
+                html += '<path d="M 50 0 Q 50 30 50 60 T 50 120" stroke="' + strokeColor + '" stroke-width="4" fill="none" stroke-linecap="round"/>';
+                html += '</svg>';
+            }
+
+            html += '</div>';
+        });
+
+        // Meta final
+        let todasCompletadasAhora = true;
+        for (let i = 0; i < unidadesData.length; i++) {
+            if (unidadesData[i].completada !== 1 && unidadesData[i].id !== unidadCompletadaId) {
+                todasCompletadasAhora = false;
+                break;
+            }
+        }
+
+        html += '<div class="vertical-path-node-wrapper">';
+        html += '<div class="vertical-path-node vertical-path-goal' + (todasCompletadasAhora ? ' completed' : '') + '" id="vertical-path-goal">';
+
+        if (todasCompletadasAhora) {
+            html += '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">';
+            html += '<path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="white"/>';
+            html += '</svg>';
+        } else {
+            html += '<span class="vertical-path-goal-icon">🏆</span>';
+        }
+
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+
+        container.innerHTML = html;
+    }
+
+    // Mostrar animación cuando se complete una unidad (en el centro de la pantalla)
+    function mostrarAnimacionUnidadCompletada(unidadId) {
+        const overlay = document.getElementById('path-animation-overlay');
+        if (!overlay) return;
+
+        // Renderizar el camino en el overlay
+        renderizarCaminoEnOverlay(unidadId);
+
+        // Mostrar el overlay
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+
+        // Encontrar el nodo completado y animarlo
+        setTimeout(() => {
+            const nodeWrapper = document.querySelector(`#path-animation-container .vertical-path-node-wrapper[data-unidad-id="${unidadId}"]`);
+            if (nodeWrapper) {
+                const node = nodeWrapper.querySelector('.vertical-path-node');
+                if (node) {
+                    // Agregar clase de animación especial
+                    node.classList.add('just-completed');
+
+                    // Actualizar conector anterior
+                    const prevConnector = nodeWrapper.querySelector('.vertical-path-connector');
+                    if (prevConnector) {
+                        prevConnector.classList.add('completed');
+                        const path = prevConnector.querySelector('path');
+                        if (path) {
+                            path.setAttribute('stroke', '#58cc02');
+                        }
+                    }
+                }
+            }
+        }, 100);
+
+        // Cerrar automáticamente después de 4 segundos
+        setTimeout(() => {
+            cerrarPathAnimation();
+        }, 4000);
+    }
+
+    // Cerrar animación del camino
+    function cerrarPathAnimation() {
+        const overlay = document.getElementById('path-animation-overlay');
+        if (overlay) {
+            overlay.style.animation = 'fadeOutOverlay 0.5s ease forwards';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                overlay.style.animation = '';
+                document.body.style.overflow = 'auto';
+            }, 500);
+        }
+    }
+
+    // Cerrar al hacer clic fuera del contenido
+    document.addEventListener('click', function (event) {
+        const overlay = document.getElementById('path-animation-overlay');
+        if (overlay && event.target === overlay) {
+            cerrarPathAnimation();
+        }
+    });
+
+    // Cerrar modal al hacer clic fuera de él
+    document.addEventListener('click', function (event) {
+        const modal = document.getElementById('celebration-modal');
+        if (modal && event.target === modal) {
+            cerrarCelebracion();
+        }
+    });
+</script>
+
+<style>
+    /* Estilos adicionales para calificaciones */
+    .calificacion-badge {
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .calificacion-badge.aprobada {
+        background-color: rgba(16, 185, 129, 0.15);
+        color: #10B981;
+    }
+
+    .calificacion-badge.no-aprobada {
+        background-color: rgba(245, 158, 11, 0.15);
+        color: #F59E0B;
+    }
+
+    .intentos-badge {
+        font-size: 0.75rem;
+        color: #6B7280;
+        margin-left: 8px;
+    }
+
+    .leccion-card.bloqueada {
+        opacity: 0.6;
+        pointer-events: auto;
+    }
+
+    .leccion-card.bloqueada .leccion-icon {
+        background-color: #E5E7EB;
+    }
+
+    .btn-warning {
+        background-color: #F59E0B;
+        color: white;
+        border: none;
+    }
+
+    .btn-warning:hover {
+        background-color: #D97706;
+    }
+
+    .unidad-promedio {
+        margin-left: auto;
+    }
+
+    .calificaciones-leyenda {
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}

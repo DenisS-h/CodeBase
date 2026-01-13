@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Iniciar Sesión - CodeBase{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">
+                <span class="logo-icon-large">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Corchetes angulares -->
+                        <path d="M8 6L4 12L8 18" stroke="#58cc02" stroke-width="3" stroke-linecap="round"
+                            stroke-linejoin="round" fill="none" />
+                        <path d="M16 6L20 12L16 18" stroke="#58cc02" stroke-width="3" stroke-linecap="round"
+                            stroke-linejoin="round" fill="none" />
+                    </svg>
+                </span>
+                <h1>CodeBase</h1>
+            </div>
+            <h2>Aprende Fundamentos de Programación</h2>
+            <p class="auth-subtitle">Inicia sesión para continuar tu aprendizaje</p>
+        </div>
+
+        <form method="POST" class="auth-form">
+            <div class="form-group">
+                <label for="email" class="form-label">
+                    <span class="label-icon">📧</span>
+                    Email
+                </label>
+                <input type="email" id="email" name="email" class="form-input" placeholder="tu@email.com" required
+                    autocomplete="email">
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">
+                    <span class="label-icon">🔒</span>
+                    Contraseña
+                </label>
+                <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required
+                    autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="btn-primary">
+                Ingresar
+            </button>
+
+            <!-- Opción de recuperar contraseña oculta para Render.com (SMTP no funciona) -->
+            <!--
+            <div style="text-align: center; margin-top: 1rem;">
+                <a href="{{ url_for('recuperar_password') }}"
+                    style="color: #777; text-decoration: none; font-size: 0.9rem;">
+                    ¿Olvidaste tu contraseña?
+                </a>
+            </div>
+            -->
+        </form>
+
+        <div class="auth-footer">
+            <p>¿No tienes cuenta?</p>
+            <a href="{{ url_for('registro') }}" class="link-primary">Regístrate gratis</a>
+        </div>
+    </div>
+
+    <div class="auth-illustration">
+        <div class="illustration-content">
+            <h3>🚀 Comienza tu viaje en programación</h3>
+            <ul class="feature-list">
+                <li>
+                    <span class="feature-icon">✓</span>
+                    <span>Aprende a tu propio ritmo</span>
+                </li>
+                <li>
+                    <span class="feature-icon">✓</span>
+                    <span>Ejercicios prácticos interactivos</span>
+                </li>
+                <li>
+                    <span class="feature-icon">✓</span>
+                    <span>Basado en el programa académico oficial</span>
+                </li>
+                <li>
+                    <span class="feature-icon">✓</span>
+                    <span>Progreso visible y motivador</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

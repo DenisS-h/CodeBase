@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Certificado - CodeBase{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    {% if todas_completadas %}
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="text-center mb-4 ignore-print">
+                <h2 class="fw-bold text-success mb-2">¡Felicitaciones! 🎉</h2>
+                <p class="lead">Has completado exitosamente el curso de Fundamentos de Programación.</p>
+                <button onclick="window.print()" class="btn btn-outline-success btn-lg mt-2">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+                        class="me-2">
+                        <path d="M6 9V2H18V9" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path
+                            d="M6 18H4C3.46957 18 2.96086 17.7893 2.58579 17.4142C2.21071 17.0391 2 16.5304 2 16V11C2 10.4696 2.21071 9.96086 2.58579 9.58579C2.96086 9.21071 3.46957 9 4 9H20C20.5304 9 21.0391 9.21071 21.4142 9.58579C21.7893 9.96086 22 10.4696 22 11V16C22 16.5304 21.7893 17.0391 21.4142 17.4142C21.0391 17.7893 20.5304 18 20 18H18"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M12 14H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M6 14H18V22H6V14Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    Imprimir Certificado
+                </button>
+            </div>
+
+            <div class="certificate-container shadow-lg">
+                <div class="certificate-border">
+                    <div class="certificate-content text-center">
+                        <div class="certificate-header">
+                            <div class="logo-icon-cert">&lt;/&gt;</div>
+                            <h1 class="certificate-title">CodeBase</h1>
+                            <p class="certificate-subtitle">CERTIFICADO DE FINALIZACIÓN</p>
+                        </div>
+
+                        <div class="certificate-body">
+                            <p class="cert-text">Este certificado se otorga a:</p>
+                            <h2 class="student-name">{{ usuario['nombre_completo'] }}</h2>
+                            <p class="cert-text">Por haber completado satisfactoriamente el curso de</p>
+                            <h3 class="course-name">Fundamentos de Programación</h3>
+                            <p class="cert-details">
+                                Demostrando dedicación, esfuerzo y dominio de los conceptos esenciales de la
+                                programación.
+                            </p>
+                        </div>
+
+                        <div class="certificate-footer">
+                            <div class="row w-100 justify-content-center">
+                                <div class="col-4">
+                                    <div class="signature-line"></div>
+                                    <p class="signature-text">Fecha: {{ fecha.split(' ')[0] if fecha else '2026-01-07'
+                                        }}</p>
+                                </div>
+                                <div class="col-2">
+                                    <div class="seal">
+                                        <span>OFFICIAL<br>SEAL</span>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="signature-line">CodeBase Team</div>
+                                    <p class="signature-text">Instructor / Director</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <div class="card border-0 shadow-lg rounded-4 p-5">
+                <div class="mb-4">
+                    <div class="bg-light rounded-circle d-inline-flex p-4 mb-3">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"
+                                fill="#9CA3AF" fill-opacity="0.2" />
+                            <path
+                                d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 4V7"
+                                stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" />
+                            <path d="M12 17V20" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" />
+                            <path d="M4 12H7" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" />
+                            <path d="M17 12H20" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <h2 class="fw-bold text-dark">¡Aún falta un poco!</h2>
+                    <p class="text-muted fs-5">Completa todas las unidades para desbloquear tu certificado.</p>
+                </div>
+
+                <div class="progress mb-3" style="height: 25px; border-radius: 12px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar"
+                        style="width: {{ porcentaje_avance }}%;" aria-valuenow="{{ porcentaje_avance }}"
+                        aria-valuemin="0" aria-valuemax="100">
+                        {{ porcentaje_avance }}% Completado
+                    </div>
+                </div>
+
+                <p class="mb-4">Sigue avanzando, ¡tu certificado te está esperando!</p>
+
+                <a href="{{ url_for('dashboard') }}" class="btn btn-success btn-lg px-5 fw-bold rounded-pill">
+                    Continuar Aprendiendo
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    /* Estilos del Certificado */
+    .certificate-container {
+        background-color: #f9f9f9;
+        padding: 20px;
+        position: relative;
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+        color: #333;
+        font-family: 'Times New Roman', Times, serif;
+    }
+
+    .certificate-border {
+        border: 10px double #4CAF50;
+        padding: 40px;
+        background-color: #fff;
+        position: relative;
+        background-image: radial-gradient(#f0f0f0 10%, transparent 11%), radial-gradient(#f0f0f0 10%, transparent 11%);
+        background-size: 20px 20px;
+        background-position: 0 0, 10px 10px;
+    }
+
+    .certificate-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .logo-icon-cert {
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 48px;
+        color: #4CAF50;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .certificate-title {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 3rem;
+        font-weight: 800;
+        color: #2c3e50;
+        text-transform: uppercase;
+        margin: 0;
+        letter-spacing: 2px;
+    }
+
+    .certificate-subtitle {
+        font-size: 1.2rem;
+        letter-spacing: 6px;
+        margin-top: 10px;
+        margin-bottom: 40px;
+        color: #666;
+        border-bottom: 1px solid #ddd;
+        display: inline-block;
+        padding-bottom: 10px;
+    }
+
+    .cert-text {
+        font-size: 1.2rem;
+        font-style: italic;
+        margin: 5px 0;
+    }
+
+    .student-name {
+        font-size: 2.5rem;
+        font-family: 'Great Vibes', cursive;
+        /* Fallback to script if not available */
+        color: #4CAF50;
+        margin: 20px 0;
+        border-bottom: 2px solid #eee;
+        display: inline-block;
+        padding: 0 40px 10px;
+    }
+
+    .course-name {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #333;
+        margin: 20px 0;
+    }
+
+    .cert-details {
+        font-size: 1.1rem;
+        max-width: 600px;
+        margin: 20px auto 50px;
+        color: #555;
+    }
+
+    .certificate-footer {
+        margin-top: 50px;
+    }
+
+    .signature-line {
+        border-top: 1px solid #333;
+        margin-top: 50px;
+        padding-top: 10px;
+        font-weight: bold;
+        font-size: 1.1rem;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .seal {
+        width: 100px;
+        height: 100px;
+        background-color: #ffd700;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        border: 4px solid #dda009;
+        color: #b58206;
+        font-weight: bold;
+        transform: rotate(-15deg);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        font-family: sans-serif;
+        text-align: center;
+        font-size: 0.8rem;
+    }
+
+    @media print {
+
+        header,
+        .navbar,
+        .btn-menu-floating,
+        .sidebar,
+        .flash-messages,
+        .ignore-print,
+        footer {
+            display: none !important;
+        }
+
+        body {
+            background-color: white;
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+
+        .main-content {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .certificate-container {
+            box-shadow: none;
+            margin: 0;
+            width: 100%;
+            max-width: 100%;
+            page-break-inside: avoid;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+    }
+</style>
+
+<!-- Add a nice script font similar to Great Vibes if helpful -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+<style>
+    .student-name {
+        font-family: 'Great Vibes', cursive;
+    }
+</style>
+{% endblock %}

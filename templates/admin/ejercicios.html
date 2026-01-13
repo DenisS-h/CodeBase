@@ -1,0 +1,1557 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Gestionar Ejercicios{% endblock %}
+
+{% block content %}
+<div class="ejercicios-page">
+    <div class="page-header">
+        <a href="{{ url_for('admin_contenido') }}" class="btn-back">← Volver</a>
+        <h2>➕ Agregar Ejercicios</h2>
+        <p class="page-subtitle">Gestiona ejercicios de las lecciones</p>
+    </div>
+
+    <div class="content-card">
+        <div class="form-row">
+            <div class="premium-form-group">
+                <label>Unidad</label>
+                <select id="ejercicioUnidad" class="premium-input" required onchange="cargarLecciones(this.value)">
+                    <option value="">Selecciona una unidad</option>
+                    {% for unidad in unidades %}
+                    <option value="{{ unidad.id }}">Unidad {{ unidad.numero }}: {{ unidad.titulo }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="premium-form-group">
+                <label>Lección</label>
+                <select id="ejercicioLeccion" class="premium-input" required onchange="cargarEjercicios(this.value)">
+                    <option value="">Primero selecciona una unidad</option>
+                </select>
+            </div>
+        </div>
+        
+        <div id="ejerciciosExistentes" class="ejercicios-existentes" style="display: none;">
+            <h4>Ejercicios Existentes de esta Lección</h4>
+            <div id="listaEjercicios" class="lista-ejercicios"></div>
+        </div>
+        
+        <hr style="margin: 2rem 0; border: none; border-top: 2px solid #f1f5f9;">
+        
+        <h4 id="formTitle">Agregar Nuevo Ejercicio</h4>
+
+        <form id="formEjercicio" class="premium-form">
+            <div class="premium-form-group">
+                <label>Tipo de Ejercicio</label>
+                <select id="ejercicioTipo" class="premium-input" required onchange="toggleTipoEjercicio()">
+                    <option value="">Selecciona un tipo</option>
+                    <option value="opcion_multiple">Opción Múltiple</option>
+                    <option value="fill_in_blank">Completar Espacios</option>
+                    <option value="verdadero_falso">Verdadero/Falso</option>
+                </select>
+            </div>
+
+            <div class="premium-form-group">
+                <label>Pregunta</label>
+                <textarea id="ejercicioPregunta" class="premium-input" rows="3" required placeholder="Escribe la pregunta del ejercicio..."></textarea>
+            </div>
+
+            <!-- Opción Múltiple -->
+            <div id="opcionMultipleContainer" class="tipo-container" style="display: none;">
+                <label>Opciones de Respuesta</label>
+                <div class="opciones-input-container">
+                    <div class="opcion-input-wrapper">
+                        <span class="opcion-letra">a)</span>
+                        <input type="text" class="opcion-input" placeholder="Escribe la opción y presiona Enter..." data-letra="a">
+                    </div>
+                </div>
+                <div id="opcionesLista" class="opciones-lista"></div>
+                <small class="form-hint">Presiona Enter después de cada opción para agregar la siguiente. Mínimo 2 opciones.</small>
+                
+                <div class="premium-form-group" style="margin-top: 1rem;">
+                    <label>Respuesta Correcta</label>
+                    <select id="respuestaCorrectaMultiple" class="premium-input">
+                        <option value="">Selecciona la respuesta correcta</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Completar Espacios -->
+            <div id="fillBlankContainer" class="tipo-container" style="display: none;">
+                <label>Texto con Espacios en Blanco</label>
+                <div class="texto-editable-container">
+                    <div id="textoEditable" class="texto-editable" contenteditable="true" placeholder="Escribe el texto aquí. Selecciona las palabras que quieres dejar en blanco y haz clic en 'Marcar como espacio'..."></div>
+                    <div class="texto-acciones">
+                        <button type="button" class="btn-marcar-espacio" onclick="marcarComoEspacio()">Marcar como espacio</button>
+                        <button type="button" class="btn-limpiar-texto" onclick="limpiarTextoEditable()">Limpiar</button>
+                    </div>
+                </div>
+                <div id="textoPreview" class="texto-preview"></div>
+                <small class="form-hint">Selecciona las palabras en el texto y haz clic en "Marcar como espacio" para dejarlas en blanco.</small>
+                
+                <input type="hidden" id="textoCompleto" value="">
+                <input type="hidden" id="respuestaCorrectaFill" value="">
+            </div>
+
+            <!-- Verdadero/Falso -->
+            <div id="verdaderoFalsoContainer" class="tipo-container" style="display: none;">
+                <div class="premium-form-group">
+                    <label>Concepto o Afirmación</label>
+                    <textarea id="conceptoVF" class="premium-input" rows="3" placeholder="Escribe el concepto o afirmación que el estudiante debe evaluar..."></textarea>
+                </div>
+                <div class="premium-form-group">
+                    <label>Respuesta Correcta</label>
+                    <div class="vf-opciones">
+                        <label class="vf-radio-label">
+                            <input type="radio" name="respuestaVF" value="verdadero" id="vfVerdadero">
+                            <span>Verdadero</span>
+                        </label>
+                        <label class="vf-radio-label">
+                            <input type="radio" name="respuestaVF" value="falso" id="vfFalso">
+                            <span>Falso</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="premium-form-group">
+                <label>Explicación</label>
+                <textarea id="ejercicioExplicacion" class="premium-input" rows="2" placeholder="Explicación que verá el estudiante al responder..."></textarea>
+            </div>
+
+            <div class="premium-form-group">
+                <label>Puntos</label>
+                <input type="number" id="ejercicioPuntos" class="premium-input" value="10" min="1" max="100">
+            </div>
+
+            <button type="submit" class="btn-primary" id="submitEjercicioBtn">Agregar Ejercicio</button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal de Edición de Ejercicio -->
+<div id="modalEditarEjercicio" class="modal-ejercicio" style="display: none;">
+    <div class="modal-ejercicio-content">
+        <div class="modal-ejercicio-header">
+            <h3>Editar Ejercicio</h3>
+            <button type="button" class="btn-cerrar-modal" onclick="cerrarModalEdicion()">×</button>
+        </div>
+        <form id="formEditarEjercicio" class="premium-form">
+            <input type="hidden" id="editEjercicioId" value="">
+            <input type="hidden" id="editLeccionId" value="">
+
+            <div class="premium-form-group">
+                <label>Tipo de Ejercicio</label>
+                <select id="editEjercicioTipo" class="premium-input" required onchange="toggleTipoEjercicioEdit()">
+                    <option value="">Selecciona un tipo</option>
+                    <option value="opcion_multiple">Opción Múltiple</option>
+                    <option value="fill_in_blank">Completar Espacios</option>
+                    <option value="verdadero_falso">Verdadero/Falso</option>
+                </select>
+            </div>
+
+            <div class="premium-form-group">
+                <label>Pregunta</label>
+                <textarea id="editEjercicioPregunta" class="premium-input" rows="3" required placeholder="Escribe la pregunta del ejercicio..."></textarea>
+            </div>
+
+            <!-- Opción Múltiple -->
+            <div id="editOpcionMultipleContainer" class="tipo-container" style="display: none;">
+                <label>Opciones de Respuesta</label>
+                <div class="opciones-input-container">
+                    <div class="opcion-input-wrapper">
+                        <span class="opcion-letra">a)</span>
+                        <input type="text" class="opcion-input" placeholder="Escribe la opción y presiona Enter..." data-letra="a">
+                    </div>
+                </div>
+                <div id="editOpcionesLista" class="opciones-lista"></div>
+                <small class="form-hint">Presiona Enter después de cada opción para agregar la siguiente. Mínimo 2 opciones.</small>
+                
+                <div class="premium-form-group" style="margin-top: 1rem;">
+                    <label>Respuesta Correcta</label>
+                    <select id="editRespuestaCorrectaMultiple" class="premium-input">
+                        <option value="">Selecciona la respuesta correcta</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Completar Espacios -->
+            <div id="editFillBlankContainer" class="tipo-container" style="display: none;">
+                <label>Texto con Espacios en Blanco</label>
+                <div class="texto-editable-container">
+                    <div id="editTextoEditable" class="texto-editable" contenteditable="true" placeholder="Escribe el texto aquí. Selecciona las palabras que quieres dejar en blanco y haz clic en 'Marcar como espacio'..."></div>
+                    <div class="texto-acciones">
+                        <button type="button" class="btn-marcar-espacio" onclick="marcarComoEspacioEdit()">Marcar como espacio</button>
+                        <button type="button" class="btn-limpiar-texto" onclick="limpiarTextoEditableEdit()">Limpiar</button>
+                    </div>
+                </div>
+                <div id="editTextoPreview" class="texto-preview"></div>
+                <small class="form-hint">Selecciona las palabras en el texto y haz clic en "Marcar como espacio" para dejarlas en blanco.</small>
+                
+                <input type="hidden" id="editTextoCompleto" value="">
+                <input type="hidden" id="editRespuestaCorrectaFill" value="">
+            </div>
+
+            <!-- Verdadero/Falso -->
+            <div id="editVerdaderoFalsoContainer" class="tipo-container" style="display: none;">
+                <div class="premium-form-group">
+                    <label>Concepto o Afirmación</label>
+                    <textarea id="editConceptoVF" class="premium-input" rows="3" placeholder="Escribe el concepto o afirmación que el estudiante debe evaluar..."></textarea>
+                </div>
+                <div class="premium-form-group">
+                    <label>Respuesta Correcta</label>
+                    <div class="vf-opciones">
+                        <label class="vf-radio-label">
+                            <input type="radio" name="editRespuestaVF" value="verdadero" id="editVfVerdadero">
+                            <span>Verdadero</span>
+                        </label>
+                        <label class="vf-radio-label">
+                            <input type="radio" name="editRespuestaVF" value="falso" id="editVfFalso">
+                            <span>Falso</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="premium-form-group">
+                <label>Explicación</label>
+                <textarea id="editEjercicioExplicacion" class="premium-input" rows="2" placeholder="Explicación que verá el estudiante al responder..."></textarea>
+            </div>
+
+            <div class="premium-form-group">
+                <label>Puntos</label>
+                <input type="number" id="editEjercicioPuntos" class="premium-input" value="10" min="1" max="100">
+            </div>
+
+            <div class="modal-ejercicio-actions">
+                <button type="submit" class="btn-primary">Actualizar Ejercicio</button>
+                <button type="button" class="btn-secondary" onclick="cerrarModalEdicion()">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .ejercicios-page {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .btn-back {
+        display: inline-block;
+        margin-bottom: 1rem;
+        color: var(--admin-primary);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .btn-back:hover {
+        color: var(--admin-primary-dark);
+    }
+
+    .page-header h2 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+        color: #0f172a;
+    }
+
+    .page-subtitle {
+        color: #64748b;
+        margin: 0;
+    }
+
+    .content-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        border: 1px solid #f1f5f9;
+    }
+
+    .content-card h3, .content-card h4 {
+        margin: 0 0 1.5rem 0;
+        font-size: 1.25rem;
+        color: #0f172a;
+    }
+
+    .premium-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .premium-form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .premium-form-group label {
+        font-weight: 600;
+        color: #475569;
+        font-size: 0.875rem;
+    }
+
+    .premium-input {
+        padding: 0.75rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.2s;
+        font-family: inherit;
+    }
+
+    .premium-input:focus {
+        outline: none;
+        border-color: var(--admin-primary);
+        box-shadow: 0 0 0 3px rgba(88, 204, 2, 0.1);
+    }
+
+    .form-hint {
+        color: #64748b;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .btn-primary {
+        background: var(--admin-primary);
+        color: white;
+        border: none;
+        padding: 0.875rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+        background: var(--admin-primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(88, 204, 2, 0.3);
+    }
+
+    .btn-secondary {
+        background: #f1f5f9;
+        color: #475569;
+        border: none;
+        padding: 0.875rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+        background: #e2e8f0;
+    }
+
+    .ejercicios-existentes {
+        margin: 2rem 0;
+        padding: 1.5rem;
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .lista-ejercicios {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .ejercicio-item {
+        padding: 1.5rem;
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .ejercicio-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .ejercicio-numero {
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .ejercicio-tipo-badge {
+        padding: 0.25rem 0.75rem;
+        background: #e0f2fe;
+        color: #0369a1;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+
+    .ejercicio-pregunta-texto {
+        margin: 1rem 0;
+        color: #475569;
+        line-height: 1.6;
+    }
+
+    .ejercicio-opciones-list {
+        margin: 0.75rem 0;
+        padding: 0.75rem;
+        background: #f8fafc;
+        border-radius: 8px;
+    }
+
+    .opcion-item {
+        padding: 0.5rem;
+        margin-bottom: 0.25rem;
+        font-size: 0.875rem;
+        color: #475569;
+    }
+
+    .ejercicio-respuesta-info {
+        margin: 0.75rem 0;
+        padding: 0.5rem;
+        background: #ecfdf5;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        color: #059669;
+    }
+
+    .ejercicio-fill-preview, .ejercicio-vf-preview {
+        margin: 0.75rem 0;
+        padding: 0.5rem;
+        background: #f1f5f9;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        color: #64748b;
+        font-style: italic;
+    }
+
+    .ejercicio-acciones {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .btn-edit-ejercicio, .btn-delete-ejercicio {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-edit-ejercicio {
+        background: #e0f2fe;
+        color: #0369a1;
+    }
+
+    .btn-edit-ejercicio:hover {
+        background: #bae6fd;
+    }
+
+    .btn-delete-ejercicio {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .btn-delete-ejercicio:hover {
+        background: #fecaca;
+    }
+
+    .tipo-container {
+        margin: 1.5rem 0;
+        padding: 1.5rem;
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .opciones-input-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .opcion-input-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: white;
+        padding: 0.75rem;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .opcion-letra {
+        font-weight: 700;
+        color: var(--admin-primary);
+        min-width: 24px;
+    }
+
+    .opcion-input {
+        flex: 1;
+        border: none;
+        outline: none;
+        font-size: 0.95rem;
+        padding: 0.5rem;
+        background: transparent;
+    }
+
+    .opcion-input:focus {
+        outline: none;
+        background: rgba(88, 204, 2, 0.05);
+    }
+
+    .opcion-input[readonly] {
+        background: #f8fafc;
+        color: #64748b;
+    }
+
+    .opciones-lista {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .opcion-agregada {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: white;
+        border-radius: 8px;
+        border-left: 3px solid var(--admin-primary);
+    }
+
+    .opcion-letra-lista {
+        font-weight: 700;
+        color: var(--admin-primary);
+        min-width: 24px;
+    }
+
+    .opcion-texto-lista {
+        flex: 1;
+        color: #0f172a;
+    }
+
+    .btn-remove-opcion {
+        background: #fef2f2;
+        border: none;
+        color: #dc2626;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 0.75rem;
+        transition: all 0.2s;
+    }
+
+    .btn-remove-opcion:hover {
+        background: #fee2e2;
+        transform: scale(1.1);
+    }
+
+    .btn-remove-opcion-small {
+        background: #fef2f2;
+        border: none;
+        color: #dc2626;
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .btn-remove-opcion-small:hover {
+        background: #fee2e2;
+        transform: scale(1.1);
+    }
+
+    .texto-editable-container {
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1rem;
+        min-height: 200px;
+    }
+
+    .texto-editable {
+        min-height: 150px;
+        padding: 1rem;
+        font-size: 1rem;
+        line-height: 1.6;
+        color: #0f172a;
+        outline: none;
+    }
+
+    .texto-editable:empty:before {
+        content: attr(placeholder);
+        color: #94a3b8;
+    }
+
+    .texto-editable:focus {
+        outline: none;
+    }
+
+    .espacio-blanco {
+        background: #fef3c7;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        border: 2px dashed #f59e0b;
+        color: #92400e;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-block;
+        margin: 0 0.25rem;
+    }
+
+    .texto-acciones {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .btn-marcar-espacio, .btn-limpiar-texto {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s;
+    }
+
+    .btn-marcar-espacio {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .btn-marcar-espacio:hover {
+        background: #fde68a;
+    }
+
+    .btn-limpiar-texto {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .btn-limpiar-texto:hover {
+        background: #e2e8f0;
+    }
+
+    .texto-preview {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        min-height: 60px;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    .preview-espacio {
+        background: #fef3c7;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        border: 2px dashed #f59e0b;
+        color: #92400e;
+        font-weight: 700;
+        display: inline-block;
+        margin: 0 0.25rem;
+    }
+
+    .vf-opciones {
+        display: flex;
+        gap: 1.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .vf-radio-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: 600;
+        color: #475569;
+    }
+
+    .vf-radio-label:hover {
+        border-color: var(--admin-primary);
+        background: rgba(88, 204, 2, 0.05);
+    }
+
+    .vf-radio-label input[type="radio"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: var(--admin-primary);
+    }
+
+    .vf-radio-label input[type="radio"]:checked + span {
+        color: var(--admin-primary);
+    }
+
+    .vf-radio-label:has(input:checked) {
+        border-color: var(--admin-primary);
+        background: rgba(88, 204, 2, 0.1);
+    }
+
+    .modal-ejercicio {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        overflow-y: auto;
+    }
+
+    .modal-ejercicio-content {
+        background: white;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 900px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        animation: modalSlideIn 0.3s ease-out;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modal-ejercicio-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        border-bottom: 2px solid #f1f5f9;
+    }
+
+    .modal-ejercicio-header h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        color: #0f172a;
+    }
+
+    .btn-cerrar-modal {
+        background: none;
+        border: none;
+        font-size: 2rem;
+        color: #64748b;
+        cursor: pointer;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+
+    .btn-cerrar-modal:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+
+    .modal-ejercicio-content .premium-form {
+        padding: 2rem;
+    }
+
+    .modal-ejercicio-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 2px solid #f1f5f9;
+    }
+
+    .modal-ejercicio-actions .btn-primary,
+    .modal-ejercicio-actions .btn-secondary {
+        flex: 1;
+    }
+</style>
+
+<script>
+    const leccionesPorUnidad = {{ lecciones_por_unidad|tojson|safe }};
+    
+    function cargarLecciones(unidadId) {
+        const leccionSelect = document.getElementById('ejercicioLeccion');
+        leccionSelect.innerHTML = '<option value="">Cargando...</option>';
+        document.getElementById('ejerciciosExistentes').style.display = 'none';
+
+        if (!unidadId) {
+            leccionSelect.innerHTML = '<option value="">Primero selecciona una unidad</option>';
+            return;
+        }
+
+        const unidadIdStr = String(unidadId);
+        const unidadIdNum = parseInt(unidadId);
+        const leccionesUnidad = leccionesPorUnidad[unidadIdStr] || leccionesPorUnidad[unidadIdNum] || [];
+
+        leccionSelect.innerHTML = '<option value="">Selecciona una lección</option>';
+        leccionesUnidad.forEach(leccion => {
+            const option = document.createElement('option');
+            option.value = leccion.id;
+            option.textContent = `${leccion.orden}. ${leccion.titulo}`;
+            leccionSelect.appendChild(option);
+        });
+    }
+
+    let opcionesAgregadas = [];
+    let opcionesAgregadasEdit = [];
+    let letrasOpciones = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+    let ejercicioEditandoId = null;
+
+    async function cargarEjercicios(leccionId) {
+        if (!leccionId) {
+            document.getElementById('ejerciciosExistentes').style.display = 'none';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/admin/contenido/ejercicios/${leccionId}`);
+            const result = await response.json();
+            
+            if (result.success && result.ejercicios.length > 0) {
+                const container = document.getElementById('listaEjercicios');
+                container.innerHTML = '';
+                
+                result.ejercicios.forEach((ejercicio, index) => {
+                    const ejercicioDiv = document.createElement('div');
+                    ejercicioDiv.className = 'ejercicio-item';
+                    ejercicioDiv.id = `ejercicio-${ejercicio.id}`;
+                    
+                    let opcionesHTML = '';
+                    if (ejercicio.tipo === 'opcion_multiple' && ejercicio.opciones) {
+                        const opciones = ejercicio.opciones.split('|');
+                        opcionesHTML = '<div class="ejercicio-opciones-list">';
+                        opciones.forEach(op => {
+                            const opcionLimpia = op.trim();
+                            const letra = opcionLimpia.charAt(0);
+                            const texto = opcionLimpia.length > 2 ? opcionLimpia.substring(2).trim() : opcionLimpia;
+                            opcionesHTML += `<div class="opcion-item"><strong>${letra})</strong> ${texto}</div>`;
+                        });
+                        opcionesHTML += '</div>';
+                    } else if (ejercicio.tipo === 'fill_in_blank') {
+                        const respuestas = ejercicio.respuesta_correcta ? ejercicio.respuesta_correcta.split('|') : [];
+                        opcionesHTML = '<div class="ejercicio-fill-preview">';
+                        opcionesHTML += '<strong>Espacios en blanco:</strong> ';
+                        opcionesHTML += respuestas.map((r, i) => `"${r.trim()}"`).join(', ') || 'Ninguno';
+                        opcionesHTML += '</div>';
+                    } else if (ejercicio.tipo === 'verdadero_falso') {
+                        opcionesHTML = '<div class="ejercicio-vf-preview">';
+                        opcionesHTML += `<strong>Tipo:</strong> ${ejercicio.respuesta_correcta === 'verdadero' ? 'Verdadero' : 'Falso'}`;
+                        opcionesHTML += '</div>';
+                    }
+                    
+                    ejercicioDiv.innerHTML = `
+                        <div class="ejercicio-header">
+                            <span class="ejercicio-numero">Ejercicio ${index + 1}</span>
+                            <span class="ejercicio-tipo-badge">${ejercicio.tipo.replace('_', ' ')}</span>
+                        </div>
+                        <div class="ejercicio-pregunta-texto">${ejercicio.pregunta}</div>
+                        ${opcionesHTML}
+                        <div class="ejercicio-respuesta-info">
+                            <strong>Respuesta correcta:</strong> ${ejercicio.respuesta_correcta}
+                        </div>
+                        <div class="ejercicio-acciones">
+                            <button type="button" class="btn-edit-ejercicio" onclick="editarEjercicio(${ejercicio.id}, ${ejercicio.leccion_id})">✏️ Editar</button>
+                            <button type="button" class="btn-delete-ejercicio" onclick="eliminarEjercicio(${ejercicio.id})">🗑️ Eliminar</button>
+                        </div>
+                    `;
+                    container.appendChild(ejercicioDiv);
+                });
+                
+                document.getElementById('ejerciciosExistentes').style.display = 'block';
+            } else {
+                document.getElementById('ejerciciosExistentes').style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error al cargar ejercicios:', error);
+        }
+    }
+
+    async function eliminarEjercicio(ejercicioId) {
+        if (!confirm('¿Estás seguro de que deseas eliminar este ejercicio?')) return;
+
+        try {
+            const response = await fetch(`/admin/contenido/ejercicio/${ejercicioId}`, {
+                method: 'DELETE'
+            });
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('Ejercicio eliminado exitosamente');
+                const leccionId = document.getElementById('ejercicioLeccion').value;
+                cargarEjercicios(leccionId);
+            } else {
+                alert('Error: ' + (result.message || 'No se pudo eliminar el ejercicio'));
+            }
+        } catch (error) {
+            alert('Error de conexión: ' + error.message);
+        }
+    }
+
+    async function editarEjercicio(ejercicioId, leccionId) {
+        ejercicioEditandoId = ejercicioId;
+        document.getElementById('editEjercicioId').value = ejercicioId;
+        document.getElementById('editLeccionId').value = leccionId;
+        
+        try {
+            const response = await fetch(`/admin/contenido/ejercicios/${leccionId}`);
+            const result = await response.json();
+            
+            if (result.success) {
+                const ejercicio = result.ejercicios.find(e => e.id == ejercicioId);
+                if (ejercicio) {
+                    cargarDatosEjercicioEnModal(ejercicio);
+                    document.getElementById('modalEditarEjercicio').style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+        } catch (error) {
+            alert('Error al cargar ejercicio: ' + error.message);
+        }
+    }
+
+    function cargarDatosEjercicioEnModal(ejercicio) {
+        document.getElementById('editEjercicioTipo').value = ejercicio.tipo;
+        document.getElementById('editEjercicioPregunta').value = ejercicio.pregunta;
+        document.getElementById('editEjercicioExplicacion').value = ejercicio.explicacion || '';
+        document.getElementById('editEjercicioPuntos').value = ejercicio.puntos || 10;
+        
+        toggleTipoEjercicioEdit();
+        
+        if (ejercicio.tipo === 'opcion_multiple') {
+            if (ejercicio.opciones) {
+                const opciones = ejercicio.opciones.split('|');
+                opcionesAgregadasEdit = [];
+                const container = document.querySelector('#editOpcionMultipleContainer .opciones-input-container');
+                container.innerHTML = '';
+                const select = document.getElementById('editRespuestaCorrectaMultiple');
+                select.innerHTML = '<option value="">Selecciona la respuesta correcta</option>';
+                const lista = document.getElementById('editOpcionesLista');
+                lista.innerHTML = '';
+                
+                opciones.forEach((op, index) => {
+                    const letra = letrasOpciones[index];
+                    const texto = op.trim().substring(2);
+                    opcionesAgregadasEdit.push({ letra: letra, texto: texto });
+                    
+                    const option = document.createElement('option');
+                    option.value = letra;
+                    option.textContent = `${letra}) ${texto}`;
+                    select.appendChild(option);
+                    
+                    const opcionDiv = document.createElement('div');
+                    opcionDiv.className = 'opcion-agregada';
+                    opcionDiv.innerHTML = `
+                        <span class="opcion-letra-lista">${letra})</span>
+                        <span class="opcion-texto-lista">${texto}</span>
+                        <button type="button" class="btn-remove-opcion" onclick="eliminarOpcionEdit('${letra}')">✕</button>
+                    `;
+                    lista.appendChild(opcionDiv);
+                });
+                
+                reconstruirInputsOpcionesEdit();
+                select.value = ejercicio.respuesta_correcta.toLowerCase();
+            }
+        } else if (ejercicio.tipo === 'fill_in_blank') {
+            document.getElementById('editTextoEditable').innerText = ejercicio.pregunta;
+            document.getElementById('editTextoCompleto').value = ejercicio.pregunta;
+            document.getElementById('editRespuestaCorrectaFill').value = ejercicio.respuesta_correcta;
+        } else if (ejercicio.tipo === 'verdadero_falso') {
+            document.getElementById('editConceptoVF').value = ejercicio.pregunta;
+            if (ejercicio.respuesta_correcta.toLowerCase() === 'verdadero') {
+                document.getElementById('editVfVerdadero').checked = true;
+            } else {
+                document.getElementById('editVfFalso').checked = true;
+            }
+        }
+    }
+
+    function cerrarModalEdicion() {
+        document.getElementById('modalEditarEjercicio').style.display = 'none';
+        document.body.style.overflow = '';
+        ejercicioEditandoId = null;
+        document.getElementById('formEditarEjercicio').reset();
+        document.getElementById('editEjercicioTipo').value = '';
+        toggleTipoEjercicioEdit();
+        opcionesAgregadasEdit = [];
+    }
+
+    document.getElementById('modalEditarEjercicio').addEventListener('click', function(e) {
+        if (e.target === this) {
+            cerrarModalEdicion();
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.getElementById('modalEditarEjercicio').style.display === 'flex') {
+            cerrarModalEdicion();
+        }
+    });
+
+    function toggleTipoEjercicio() {
+        const tipo = document.getElementById('ejercicioTipo').value;
+        document.getElementById('opcionMultipleContainer').style.display = 'none';
+        document.getElementById('fillBlankContainer').style.display = 'none';
+        document.getElementById('verdaderoFalsoContainer').style.display = 'none';
+        
+        if (tipo === 'opcion_multiple') {
+            document.getElementById('opcionMultipleContainer').style.display = 'block';
+            inicializarOpcionesMultiples();
+        } else if (tipo === 'fill_in_blank') {
+            document.getElementById('fillBlankContainer').style.display = 'block';
+        } else if (tipo === 'verdadero_falso') {
+            document.getElementById('verdaderoFalsoContainer').style.display = 'block';
+        }
+    }
+
+    function toggleTipoEjercicioEdit() {
+        const tipo = document.getElementById('editEjercicioTipo').value;
+        document.getElementById('editOpcionMultipleContainer').style.display = 'none';
+        document.getElementById('editFillBlankContainer').style.display = 'none';
+        document.getElementById('editVerdaderoFalsoContainer').style.display = 'none';
+        
+        if (tipo === 'opcion_multiple') {
+            document.getElementById('editOpcionMultipleContainer').style.display = 'block';
+            inicializarOpcionesMultiplesEdit();
+        } else if (tipo === 'fill_in_blank') {
+            document.getElementById('editFillBlankContainer').style.display = 'block';
+        } else if (tipo === 'verdadero_falso') {
+            document.getElementById('editVerdaderoFalsoContainer').style.display = 'block';
+        }
+    }
+
+    function inicializarOpcionesMultiples() {
+        opcionesAgregadas = [];
+        const container = document.querySelector('.opciones-input-container');
+        container.innerHTML = `
+            <div class="opcion-input-wrapper">
+                <span class="opcion-letra">a)</span>
+                <input type="text" class="opcion-input" placeholder="Escribe la opción y presiona Enter..." data-letra="a" onkeypress="agregarOpcion(event, 'a')">
+            </div>
+        `;
+        document.getElementById('opcionesLista').innerHTML = '';
+        document.getElementById('respuestaCorrectaMultiple').innerHTML = '<option value="">Selecciona la respuesta correcta</option>';
+    }
+
+    function inicializarOpcionesMultiplesEdit() {
+        if (opcionesAgregadasEdit.length === 0) {
+            const container = document.querySelector('#editOpcionMultipleContainer .opciones-input-container');
+            container.innerHTML = `
+                <div class="opcion-input-wrapper">
+                    <span class="opcion-letra">a)</span>
+                    <input type="text" class="opcion-input" placeholder="Escribe la opción y presiona Enter..." data-letra="a" onkeypress="agregarOpcionEdit(event, 'a')">
+                </div>
+            `;
+            document.getElementById('editOpcionesLista').innerHTML = '';
+            document.getElementById('editRespuestaCorrectaMultiple').innerHTML = '<option value="">Selecciona la respuesta correcta</option>';
+        }
+    }
+
+    function agregarOpcion(event, letraActual) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            const input = event.target;
+            const texto = input.value.trim();
+            if (texto === '') return;
+            
+            opcionesAgregadas.push({ letra: letraActual, texto: texto });
+            const select = document.getElementById('respuestaCorrectaMultiple');
+            const option = document.createElement('option');
+            option.value = letraActual;
+            option.textContent = `${letraActual}) ${texto}`;
+            select.appendChild(option);
+            
+            const lista = document.getElementById('opcionesLista');
+            const opcionDiv = document.createElement('div');
+            opcionDiv.className = 'opcion-agregada';
+            opcionDiv.innerHTML = `
+                <span class="opcion-letra-lista">${letraActual})</span>
+                <span class="opcion-texto-lista">${texto}</span>
+                <button type="button" class="btn-remove-opcion" onclick="eliminarOpcion('${letraActual}')">✕</button>
+            `;
+            lista.appendChild(opcionDiv);
+            
+            input.value = '';
+            if (opcionesAgregadas.length < letrasOpciones.length) {
+                const siguienteLetra = letrasOpciones[opcionesAgregadas.length];
+                const container = document.querySelector('.opciones-input-container');
+                const nuevoInput = document.createElement('div');
+                nuevoInput.className = 'opcion-input-wrapper';
+                nuevoInput.innerHTML = `
+                    <span class="opcion-letra">${siguienteLetra})</span>
+                    <input type="text" class="opcion-input" placeholder="Escribe la opción y presiona Enter..." data-letra="${siguienteLetra}" onkeypress="agregarOpcion(event, '${siguienteLetra}')">
+                `;
+                container.appendChild(nuevoInput);
+                nuevoInput.querySelector('input').focus();
+            }
+        }
+    }
+
+    function agregarOpcionEdit(event, letraActual) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            const input = event.target;
+            const texto = input.value.trim();
+            if (texto === '') return;
+            
+            opcionesAgregadasEdit.push({ letra: letraActual, texto: texto });
+            const select = document.getElementById('editRespuestaCorrectaMultiple');
+            const option = document.createElement('option');
+            option.value = letraActual;
+            option.textContent = `${letraActual}) ${texto}`;
+            select.appendChild(option);
+            
+            const lista = document.getElementById('editOpcionesLista');
+            const opcionDiv = document.createElement('div');
+            opcionDiv.className = 'opcion-agregada';
+            opcionDiv.innerHTML = `
+                <span class="opcion-letra-lista">${letraActual})</span>
+                <span class="opcion-texto-lista">${texto}</span>
+                <button type="button" class="btn-remove-opcion" onclick="eliminarOpcionEdit('${letraActual}')">✕</button>
+            `;
+            lista.appendChild(opcionDiv);
+            
+            input.value = '';
+            if (opcionesAgregadasEdit.length < letrasOpciones.length) {
+                const siguienteLetra = letrasOpciones[opcionesAgregadasEdit.length];
+                const container = document.querySelector('#editOpcionMultipleContainer .opciones-input-container');
+                const nuevoInput = document.createElement('div');
+                nuevoInput.className = 'opcion-input-wrapper';
+                nuevoInput.innerHTML = `
+                    <span class="opcion-letra">${siguienteLetra})</span>
+                    <input type="text" class="opcion-input" placeholder="Escribe la opción y presiona Enter..." data-letra="${siguienteLetra}" onkeypress="agregarOpcionEdit(event, '${siguienteLetra}')">
+                `;
+                container.appendChild(nuevoInput);
+                nuevoInput.querySelector('input').focus();
+            }
+        }
+    }
+
+    function eliminarOpcion(letra) {
+        opcionesAgregadas = opcionesAgregadas.filter(op => op.letra !== letra);
+        const select = document.getElementById('respuestaCorrectaMultiple');
+        const option = Array.from(select.options).find(opt => opt.value === letra);
+        if (option) option.remove();
+        const lista = document.getElementById('opcionesLista');
+        const opcionDiv = Array.from(lista.children).find(div => div.querySelector('.opcion-letra-lista').textContent.startsWith(letra));
+        if (opcionDiv) opcionDiv.remove();
+        reconstruirInputsOpciones();
+    }
+
+    function eliminarOpcionEdit(letra) {
+        opcionesAgregadasEdit = opcionesAgregadasEdit.filter(op => op.letra !== letra);
+        const select = document.getElementById('editRespuestaCorrectaMultiple');
+        const option = Array.from(select.options).find(opt => opt.value === letra);
+        if (option) option.remove();
+        const lista = document.getElementById('editOpcionesLista');
+        const opcionDiv = Array.from(lista.children).find(div => div.querySelector('.opcion-letra-lista').textContent.startsWith(letra));
+        if (opcionDiv) opcionDiv.remove();
+        reconstruirInputsOpcionesEdit();
+    }
+
+    function reconstruirInputsOpciones() {
+        const container = document.querySelector('.opciones-input-container');
+        container.innerHTML = '';
+        opcionesAgregadas.forEach((op) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'opcion-input-wrapper';
+            wrapper.innerHTML = `
+                <span class="opcion-letra">${op.letra})</span>
+                <input type="text" class="opcion-input" value="${op.texto}" data-letra="${op.letra}" readonly>
+            `;
+            container.appendChild(wrapper);
+        });
+        if (opcionesAgregadas.length < letrasOpciones.length) {
+            const siguienteLetra = letrasOpciones[opcionesAgregadas.length];
+            const wrapper = document.createElement('div');
+            wrapper.className = 'opcion-input-wrapper';
+            wrapper.innerHTML = `
+                <span class="opcion-letra">${siguienteLetra})</span>
+                <input type="text" class="opcion-input" placeholder="Escribe la opción y presiona Enter..." data-letra="${siguienteLetra}" onkeypress="agregarOpcion(event, '${siguienteLetra}')">
+            `;
+            container.appendChild(wrapper);
+        }
+    }
+
+    function reconstruirInputsOpcionesEdit() {
+        const container = document.querySelector('#editOpcionMultipleContainer .opciones-input-container');
+        container.innerHTML = '';
+        
+        // Crear inputs editables para cada opción existente
+        opcionesAgregadasEdit.forEach((op) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'opcion-input-wrapper';
+            wrapper.innerHTML = `
+                <span class="opcion-letra">${op.letra})</span>
+                <input type="text" class="opcion-input" value="${op.texto}" data-letra="${op.letra}" oninput="actualizarOpcionEdit('${op.letra}', this.value)" onkeypress="manejarEnterOpcionEdit(event, '${op.letra}')">
+                <button type="button" class="btn-remove-opcion-small" onclick="eliminarOpcionEdit('${op.letra}')" title="Eliminar opción">✕</button>
+            `;
+            container.appendChild(wrapper);
+        });
+        
+        // Agregar input para nueva opción si hay espacio
+        if (opcionesAgregadasEdit.length < letrasOpciones.length) {
+            const siguienteLetra = letrasOpciones[opcionesAgregadasEdit.length];
+            const wrapper = document.createElement('div');
+            wrapper.className = 'opcion-input-wrapper';
+            wrapper.innerHTML = `
+                <span class="opcion-letra">${siguienteLetra})</span>
+                <input type="text" class="opcion-input" placeholder="Escribe la opción y presiona Enter para agregar..." data-letra="${siguienteLetra}" onkeypress="agregarOpcionEdit(event, '${siguienteLetra}')">
+            `;
+            container.appendChild(wrapper);
+        }
+    }
+
+    function actualizarOpcionEdit(letra, nuevoTexto) {
+        // Actualizar el texto en el array
+        const opcion = opcionesAgregadasEdit.find(op => op.letra === letra);
+        if (opcion) {
+            opcion.texto = nuevoTexto;
+            
+            // Actualizar en el select de respuesta correcta
+            const select = document.getElementById('editRespuestaCorrectaMultiple');
+            const option = Array.from(select.options).find(opt => opt.value === letra);
+            if (option) {
+                option.textContent = `${letra}) ${nuevoTexto}`;
+            }
+            
+            // Actualizar en la lista visual
+            const lista = document.getElementById('editOpcionesLista');
+            const opcionDiv = Array.from(lista.children).find(div => {
+                const letraSpan = div.querySelector('.opcion-letra-lista');
+                return letraSpan && letraSpan.textContent.startsWith(letra);
+            });
+            if (opcionDiv) {
+                const textoSpan = opcionDiv.querySelector('.opcion-texto-lista');
+                if (textoSpan) {
+                    textoSpan.textContent = nuevoTexto;
+                }
+            }
+        }
+    }
+
+    function manejarEnterOpcionEdit(event, letraActual) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            // Si hay una siguiente letra disponible, crear nuevo input
+            if (opcionesAgregadasEdit.length < letrasOpciones.length) {
+                const siguienteLetra = letrasOpciones[opcionesAgregadasEdit.length];
+                const container = document.querySelector('#editOpcionMultipleContainer .opciones-input-container');
+                const nuevoInput = document.createElement('div');
+                nuevoInput.className = 'opcion-input-wrapper';
+                nuevoInput.innerHTML = `
+                    <span class="opcion-letra">${siguienteLetra})</span>
+                    <input type="text" class="opcion-input" placeholder="Escribe la opción y presiona Enter..." data-letra="${siguienteLetra}" onkeypress="agregarOpcionEdit(event, '${siguienteLetra}')">
+                `;
+                container.appendChild(nuevoInput);
+                nuevoInput.querySelector('input').focus();
+            }
+        }
+    }
+
+    function marcarComoEspacio() {
+        const textoEditable = document.getElementById('textoEditable');
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0 && !selection.isCollapsed) {
+            const range = selection.getRangeAt(0);
+            const textoSeleccionado = range.toString().trim();
+            if (textoSeleccionado) {
+                const span = document.createElement('span');
+                span.className = 'espacio-blanco';
+                span.setAttribute('data-texto', textoSeleccionado);
+                span.textContent = '____';
+                span.contentEditable = 'false';
+                span.onclick = function() {
+                    if (confirm('¿Quieres eliminar este espacio en blanco?')) {
+                        const textoOriginal = this.getAttribute('data-texto');
+                        const textoNode = document.createTextNode(textoOriginal);
+                        this.parentNode.replaceChild(textoNode, this);
+                        actualizarPreviewFillBlank();
+                    }
+                };
+                range.deleteContents();
+                range.insertNode(span);
+                const nuevoRange = document.createRange();
+                nuevoRange.setStartAfter(span);
+                nuevoRange.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(nuevoRange);
+                actualizarPreviewFillBlank();
+            }
+        }
+    }
+
+    function marcarComoEspacioEdit() {
+        const textoEditable = document.getElementById('editTextoEditable');
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0 && !selection.isCollapsed) {
+            const range = selection.getRangeAt(0);
+            const textoSeleccionado = range.toString().trim();
+            if (textoSeleccionado) {
+                const span = document.createElement('span');
+                span.className = 'espacio-blanco';
+                span.setAttribute('data-texto', textoSeleccionado);
+                span.textContent = '____';
+                span.contentEditable = 'false';
+                span.onclick = function() {
+                    if (confirm('¿Quieres eliminar este espacio en blanco?')) {
+                        const textoOriginal = this.getAttribute('data-texto');
+                        const textoNode = document.createTextNode(textoOriginal);
+                        this.parentNode.replaceChild(textoNode, this);
+                        actualizarPreviewFillBlankEdit();
+                    }
+                };
+                range.deleteContents();
+                range.insertNode(span);
+                const nuevoRange = document.createRange();
+                nuevoRange.setStartAfter(span);
+                nuevoRange.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(nuevoRange);
+                actualizarPreviewFillBlankEdit();
+            }
+        }
+    }
+
+    function actualizarPreviewFillBlank() {
+        const textoEditable = document.getElementById('textoEditable');
+        const preview = document.getElementById('textoPreview');
+        if (!textoEditable || !preview) return;
+        const textoCompleto = textoEditable.innerText;
+        const espacios = [];
+        textoEditable.querySelectorAll('.espacio-blanco').forEach((span) => {
+            espacios.push(span.getAttribute('data-texto'));
+        });
+        document.getElementById('textoCompleto').value = textoCompleto;
+        document.getElementById('respuestaCorrectaFill').value = espacios.join('|');
+        if (textoCompleto.trim() || espacios.length > 0) {
+            let previewHTML = textoEditable.innerHTML;
+            previewHTML = previewHTML.replace(/<span class="espacio-blanco"[^>]*>____<\/span>/g, '<span class="preview-espacio">____</span>');
+            preview.innerHTML = '<strong>Vista previa:</strong><br>' + previewHTML;
+        } else {
+            preview.innerHTML = '';
+        }
+    }
+
+    function actualizarPreviewFillBlankEdit() {
+        const textoEditable = document.getElementById('editTextoEditable');
+        const preview = document.getElementById('editTextoPreview');
+        if (!textoEditable || !preview) return;
+        const textoCompleto = textoEditable.innerText;
+        const espacios = [];
+        textoEditable.querySelectorAll('.espacio-blanco').forEach((span) => {
+            espacios.push(span.getAttribute('data-texto'));
+        });
+        document.getElementById('editTextoCompleto').value = textoCompleto;
+        document.getElementById('editRespuestaCorrectaFill').value = espacios.join('|');
+        if (textoCompleto.trim() || espacios.length > 0) {
+            let previewHTML = textoEditable.innerHTML;
+            previewHTML = previewHTML.replace(/<span class="espacio-blanco"[^>]*>____<\/span>/g, '<span class="preview-espacio">____</span>');
+            preview.innerHTML = '<strong>Vista previa:</strong><br>' + previewHTML;
+        } else {
+            preview.innerHTML = '';
+        }
+    }
+
+    function limpiarTextoEditable() {
+        if (confirm('¿Estás seguro de que quieres limpiar todo el texto?')) {
+            document.getElementById('textoEditable').innerHTML = '';
+            document.getElementById('textoPreview').innerHTML = '';
+            document.getElementById('textoCompleto').value = '';
+            document.getElementById('respuestaCorrectaFill').value = '';
+        }
+    }
+
+    function limpiarTextoEditableEdit() {
+        if (confirm('¿Estás seguro de que quieres limpiar todo el texto?')) {
+            document.getElementById('editTextoEditable').innerHTML = '';
+            document.getElementById('editTextoPreview').innerHTML = '';
+            document.getElementById('editTextoCompleto').value = '';
+            document.getElementById('editRespuestaCorrectaFill').value = '';
+        }
+    }
+
+    document.getElementById('formEjercicio').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = {
+            leccion_id: document.getElementById('ejercicioLeccion').value,
+            tipo: document.getElementById('ejercicioTipo').value,
+            pregunta: document.getElementById('ejercicioPregunta').value,
+            opciones: '',
+            respuesta_correcta: '',
+            explicacion: document.getElementById('ejercicioExplicacion').value,
+            puntos: parseInt(document.getElementById('ejercicioPuntos').value) || 10
+        };
+
+        const tipo = data.tipo;
+        let datosFinales = { ...data };
+        
+        if (tipo === 'opcion_multiple') {
+            const opcionesTexto = opcionesAgregadas.map(op => `${op.letra}) ${op.texto}`).join('|');
+            datosFinales.opciones = opcionesTexto;
+            datosFinales.respuesta_correcta = document.getElementById('respuestaCorrectaMultiple').value;
+            if (opcionesAgregadas.length < 2) {
+                alert('Debes agregar al menos 2 opciones');
+                return;
+            }
+        } else if (tipo === 'fill_in_blank') {
+            datosFinales.pregunta = document.getElementById('textoCompleto').value;
+            datosFinales.respuesta_correcta = document.getElementById('respuestaCorrectaFill').value;
+            datosFinales.opciones = '';
+            if (!datosFinales.pregunta || !datosFinales.respuesta_correcta) {
+                alert('Debes escribir el texto y marcar al menos un espacio en blanco');
+                return;
+            }
+        } else if (tipo === 'verdadero_falso') {
+            datosFinales.pregunta = document.getElementById('conceptoVF').value;
+            const respuestaVF = document.querySelector('input[name="respuestaVF"]:checked');
+            if (!respuestaVF) {
+                alert('Debes seleccionar si es Verdadero o Falso');
+                return;
+            }
+            datosFinales.respuesta_correcta = respuestaVF.value;
+            datosFinales.opciones = '';
+        }
+
+        try {
+            const response = await fetch('/admin/contenido/ejercicio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datosFinales)
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert('Ejercicio agregado exitosamente');
+                document.getElementById('formEjercicio').reset();
+                document.getElementById('ejercicioTipo').value = '';
+                toggleTipoEjercicio();
+                opcionesAgregadas = [];
+                const leccionId = document.getElementById('ejercicioLeccion').value;
+                if (leccionId) {
+                    cargarEjercicios(leccionId);
+                }
+            } else {
+                alert('Error: ' + (result.message || 'No se pudo guardar el ejercicio'));
+            }
+        } catch (error) {
+            alert('Error de conexión: ' + error.message);
+        }
+    });
+
+    document.getElementById('formEditarEjercicio').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const ejercicioId = document.getElementById('editEjercicioId').value;
+        const leccionId = document.getElementById('editLeccionId').value;
+
+        const data = {
+            leccion_id: leccionId,
+            tipo: document.getElementById('editEjercicioTipo').value,
+            pregunta: document.getElementById('editEjercicioPregunta').value,
+            opciones: '',
+            respuesta_correcta: '',
+            explicacion: document.getElementById('editEjercicioExplicacion').value,
+            puntos: parseInt(document.getElementById('editEjercicioPuntos').value) || 10
+        };
+
+        const tipo = data.tipo;
+        let datosFinales = { ...data };
+        
+        if (tipo === 'opcion_multiple') {
+            const opcionesTexto = opcionesAgregadasEdit.map(op => `${op.letra}) ${op.texto}`).join('|');
+            datosFinales.opciones = opcionesTexto;
+            datosFinales.respuesta_correcta = document.getElementById('editRespuestaCorrectaMultiple').value;
+            if (opcionesAgregadasEdit.length < 2) {
+                alert('Debes agregar al menos 2 opciones');
+                return;
+            }
+        } else if (tipo === 'fill_in_blank') {
+            datosFinales.pregunta = document.getElementById('editTextoCompleto').value;
+            datosFinales.respuesta_correcta = document.getElementById('editRespuestaCorrectaFill').value;
+            datosFinales.opciones = '';
+            if (!datosFinales.pregunta || !datosFinales.respuesta_correcta) {
+                alert('Debes escribir el texto y marcar al menos un espacio en blanco');
+                return;
+            }
+        } else if (tipo === 'verdadero_falso') {
+            datosFinales.pregunta = document.getElementById('editConceptoVF').value;
+            const respuestaVF = document.querySelector('input[name="editRespuestaVF"]:checked');
+            if (!respuestaVF) {
+                alert('Debes seleccionar si es Verdadero o Falso');
+                return;
+            }
+            datosFinales.respuesta_correcta = respuestaVF.value;
+            datosFinales.opciones = '';
+        }
+
+        try {
+            const response = await fetch(`/admin/contenido/ejercicio/${ejercicioId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datosFinales)
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert('Ejercicio actualizado exitosamente');
+                cerrarModalEdicion();
+                const leccionSelect = document.getElementById('ejercicioLeccion');
+                if (leccionSelect.value) {
+                    cargarEjercicios(leccionSelect.value);
+                }
+            } else {
+                alert('Error: ' + (result.message || 'No se pudo actualizar el ejercicio'));
+            }
+        } catch (error) {
+            alert('Error de conexión: ' + error.message);
+        }
+    });
+</script>
+{% endblock %}
+

@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Mis Calificaciones - CodeBase{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-lg-10">
+        <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+            <div class="card-header bg-white p-4 border-bottom-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="fw-bold text-dark mb-1">Mis Calificaciones</h2>
+                        <p class="text-muted mb-0">Sistema de calificaciones sobre 10 puntos</p>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="text-end me-3">
+                            <div class="h4 fw-bold mb-0"
+                                style="color: {{ '#10B981' if promedio_final >= 7 else '#EF4444' if promedio_final > 0 else '#6B7280' }}">
+                                {{ "%.1f"|format(promedio_final) }}/10
+                            </div>
+                            <div class="small text-muted">Promedio Final</div>
+                        </div>
+                        <div class="p-3 rounded-circle"
+                            style="background-color: {{ 'rgba(16, 185, 129, 0.1)' if promedio_final >= 7 else 'rgba(239, 68, 68, 0.1)' if promedio_final > 0 else 'rgba(107, 114, 128, 0.1)' }}">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+                                    fill="{{ '#10B981' if promedio_final >= 7 else '#EF4444' if promedio_final > 0 else '#6B7280' }}" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leyenda de calificaciones -->
+            <div class="px-4 pb-3">
+                <div class="d-flex flex-wrap gap-3 justify-content-center">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-success me-2">&nbsp;</span>
+                        <small class="text-muted">Aprobado (≥7/10)</small>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-warning me-2">&nbsp;</span>
+                        <small class="text-muted">No aprobado (&lt;7/10)</small>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-secondary me-2">&nbsp;</span>
+                        <small class="text-muted">Pendiente</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-0">
+                {% if unidades_progreso %}
+                {% for num, unidad in unidades_progreso.items()|sort %}
+                <div class="border-top p-4 {{ 'bg-light' if loop.index is even else 'bg-white' }}">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="d-flex align-items-center">
+                            <span class="badge rounded-pill bg-success me-3 py-2 px-3 fs-6">Unidad {{ unidad['numero']
+                                }}</span>
+                            <h4 class="mb-0 fw-bold">{{ unidad['titulo'] }}</h4>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="text-end">
+                                <div class="fw-bold"
+                                    style="color: {{ '#10B981' if unidad['promedio'] >= 7 else '#EF4444' if unidad['promedio'] > 0 else '#6B7280' }}">
+                                    Promedio: {{ "%.1f"|format(unidad['promedio']) }}/10
+                                </div>
+                            </div>
+                            <span class="badge {{ 'bg-success' if unidad['completada'] else 'bg-secondary' }}">
+                                {{ 'Aprobada' if unidad['completada'] else 'En Progreso' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col" class="ps-4">Lección</th>
+                                    <th scope="col" class="text-center">Estado</th>
+                                    <th scope="col" class="text-center">Calificación</th>
+                                    <th scope="col" class="text-center">Intentos</th>
+                                    <th scope="col" class="text-end pe-4">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for leccion in unidad['lecciones'] %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="fw-bold">{{ leccion['titulo'] }}</div>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if leccion['aprobada'] %}
+                                        <span class="text-success fw-bold">✓ Aprobada</span>
+                                        {% elif leccion['completada'] %}
+                                        <span class="text-warning fw-bold">⚠ No aprobada</span>
+                                        {% else %}
+                                        <span class="text-muted">Pendiente</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if leccion['completada'] %}
+                                        <div class="d-inline-flex align-items-center fw-bold px-3 py-1 rounded-pill"
+                                            style="background-color: {{ 'rgba(16, 185, 129, 0.1)' if leccion['aprobada'] else 'rgba(245, 158, 11, 0.1)' }};
+                                                    color: {{ '#10B981' if leccion['aprobada'] else '#F59E0B' }}">
+                                            <span>{{ "%.1f"|format(leccion['calificacion'] or 0) }}/10</span>
+                                        </div>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if leccion['intentos'] %}
+                                        <span class="badge bg-light text-dark">{{ leccion['intentos'] }} intento{{ 's'
+                                            if leccion['intentos'] > 1 else '' }}</span>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        {% if leccion['aprobada'] %}
+                                        <a href="{{ url_for('leccion', leccion_id=leccion['id']) }}"
+                                            class="btn btn-sm btn-outline-secondary">
+                                            Repasar
+                                        </a>
+                                        {% elif leccion['completada'] %}
+                                        <a href="{{ url_for('leccion', leccion_id=leccion['id']) }}"
+                                            class="btn btn-sm btn-warning text-white">
+                                            Reintentar
+                                        </a>
+                                        {% else %}
+                                        <a href="{{ url_for('leccion', leccion_id=leccion['id']) }}"
+                                            class="btn btn-sm btn-success text-white">
+                                            Iniciar
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="fs-1 mb-3">📭</div>
+                    <h3>No hay calificaciones disponibles</h3>
+                    <p class="text-muted">Completa lecciones para ver tus calificaciones aquí.</p>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-primary mt-3">Ir al Dashboard</a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Resumen de fórmulas -->
+            <div class="card-footer bg-light p-4">
+                <h5 class="fw-bold mb-3"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="me-2"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 7V4H20V7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M9 20H15" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M12 4V20" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>Cómo se calculan tus calificaciones</h5>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="bg-white p-3 rounded border">
+                            <h6 class="fw-bold text-success mb-2">📝 Por Lección</h6>
+                            <p class="small text-muted mb-1">Calificación = (Correctas / Total) × 10</p>
+                            <p class="small text-muted mb-0">Mínimo <strong>7/10</strong> para aprobar</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="bg-white p-3 rounded border">
+                            <h6 class="fw-bold text-primary mb-2">📚 Por Unidad</h6>
+                            <p class="small text-muted mb-1">Promedio = Suma de calificaciones / N lecciones</p>
+                            <p class="small text-muted mb-0">Todas las lecciones deben estar aprobadas</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="bg-white p-3 rounded border">
+                            <h6 class="fw-bold text-warning mb-2">🎓 Promedio Final</h6>
+                            <p class="small text-muted mb-1">Promedio = Suma de promedios por unidad / 5</p>
+                            <p class="small text-muted mb-0">Se guardan <strong>intentos ilimitados</strong>, solo la
+                                mejor nota</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

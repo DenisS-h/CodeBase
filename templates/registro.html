@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Registro - CodeBase{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">
+                <span class="logo-icon-large">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Corchetes angulares -->
+                        <path d="M8 6L4 12L8 18" stroke="#58cc02" stroke-width="3" stroke-linecap="round"
+                            stroke-linejoin="round" fill="none" />
+                        <path d="M16 6L20 12L16 18" stroke="#58cc02" stroke-width="3" stroke-linecap="round"
+                            stroke-linejoin="round" fill="none" />
+                    </svg>
+                </span>
+                <h1>CodeBase</h1>
+            </div>
+            <h2>Crea tu cuenta</h2>
+            <p class="auth-subtitle">Comienza a aprender programación hoy mismo</p>
+        </div>
+
+        <form method="POST" class="auth-form">
+            <div class="form-group">
+                <label for="nombre" class="form-label">
+                    <span class="label-icon">👤</span>
+                    Nombre Completo
+                </label>
+                <input type="text" id="nombre" name="nombre" class="form-input" placeholder="Juan Pérez" required
+                    autocomplete="name">
+            </div>
+            <div id="nombre-error" class="error-msg"></div>
+
+            <div class="form-group">
+                <label for="email" class="form-label">
+                    <span class="label-icon">📧</span>
+                    Email
+                </label>
+                <input type="email" id="email" name="email" class="form-input" placeholder="tu@email.com" required
+                    autocomplete="email">
+            </div>
+            <div id="email-error" class="error-msg"></div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">
+                    <span class="label-icon">🔒</span>
+                    Contraseña
+                </label>
+                <input type="password" id="password" name="password" class="form-input"
+                    placeholder="Mínimo 6 caracteres" required minlength="6" autocomplete="new-password">
+            </div>
+
+            <div class="form-group">
+                <label for="confirmar_password" class="form-label">
+                    <span class="label-icon">🔒</span>
+                    Confirmar Contraseña
+                </label>
+                <input type="password" id="confirmar_password" name="confirmar_password" class="form-input"
+                    placeholder="Repite tu contraseña" required minlength="6" autocomplete="new-password">
+            </div>
+            <div id="password-error" class="error-msg"></div>
+
+            <style>
+                .error-msg {
+                    color: #c62828;
+                    font-size: 0.85rem;
+                    margin-top: -1rem;
+                    margin-bottom: 1rem;
+                    min-height: 1.25rem;
+                    display: none;
+                    padding-left: 0.5rem;
+                }
+
+                .input-error {
+                    border-color: #c62828 !important;
+                }
+
+                .input-success {
+                    border-color: #2e7d32 !important;
+                }
+            </style>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const form = document.querySelector('.auth-form');
+                    const nombreInput = document.getElementById('nombre');
+                    const emailInput = document.getElementById('email');
+                    const passInput = document.getElementById('password');
+                    const confirmInput = document.getElementById('confirmar_password');
+
+                    // Función para mostrar error
+                    function showError(input, msgDiv, message) {
+                        msgDiv.textContent = message;
+                        msgDiv.style.display = 'block';
+                        input.classList.add('input-error');
+                        input.classList.remove('input-success');
+                        return false;
+                    }
+
+                    // Función para mostrar éxito/limpiar error
+                    function clearError(input, msgDiv) {
+                        msgDiv.textContent = '';
+                        msgDiv.style.display = 'none';
+                        input.classList.remove('input-error');
+                        if (input.value.length > 0) input.classList.add('input-success');
+                        return true;
+                    }
+
+                    // Validación de Nombre (Solo letras)
+                    nombreInput.addEventListener('input', function () {
+                        const errorDiv = document.getElementById('nombre-error');
+                        // Regex: Solo letras y espacios. No números ni símbolos especiales.
+                        const regex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+
+                        if (this.value.length > 0 && !regex.test(this.value)) {
+                            showError(this, errorDiv, '⚠ El nombre solo debe contener letras.');
+                        } else {
+                            clearError(this, errorDiv);
+                        }
+                    });
+
+                    // Validación de Email (Unicidad)
+                    emailInput.addEventListener('blur', async function () {
+                        const errorDiv = document.getElementById('email-error');
+                        if (this.value.length === 0) return;
+
+                        if (!this.checkValidity()) {
+                            showError(this, errorDiv, '⚠ Ingresa un email válido.');
+                            return;
+                        }
+
+                        try {
+                            const response = await fetch(`/api/check-email/${this.value}`);
+                            const data = await response.json();
+
+                            if (data.exists) {
+                                showError(this, errorDiv, '⚠ Este correo ya está registrado.');
+                            } else {
+                                clearError(this, errorDiv);
+                            }
+                        } catch (e) {
+                            console.error('Error validando email:', e);
+                        }
+                    });
+
+                    // Quitar error de email al escribir
+                    emailInput.addEventListener('input', function () {
+                        const errorDiv = document.getElementById('email-error');
+                        clearError(this, errorDiv);
+                    });
+
+                    // Validación de Contraseñas
+                    function validatePasswords() {
+                        const errorDiv = document.getElementById('password-error');
+
+                        if (confirmInput.value.length > 0) {
+                            if (passInput.value !== confirmInput.value) {
+                                showError(confirmInput, errorDiv, '⚠ Las contraseñas no coinciden.');
+                            } else {
+                                clearError(confirmInput, errorDiv);
+                            }
+                        }
+                    }
+
+                    passInput.addEventListener('input', validatePasswords);
+                    confirmInput.addEventListener('input', validatePasswords);
+
+                    // Prevenir envío si hay errores
+                    form.addEventListener('submit', function (e) {
+                        const nameError = document.getElementById('nombre').classList.contains('input-error');
+                        const emailError = document.getElementById('email').classList.contains('input-error');
+                        const passError = document.getElementById('confirmar_password').classList.contains('input-error');
+
+                        if (nameError || emailError || passError) {
+                            e.preventDefault();
+                            alert('Por favor, corrige los errores antes de continuar.');
+                        }
+                    });
+                });
+            </script>
+
+            <button type="submit" class="btn-primary btn-large">
+                Crear Cuenta
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p>¿Ya tienes cuenta?</p>
+            <a href="{{ url_for('login') }}" class="link-primary">Inicia sesión</a>
+        </div>
+    </div>
+
+    <div class="auth-illustration">
+        <div class="illustration-content">
+            <h3>📚 Tu camino de aprendizaje incluye:</h3>
+            <div class="unidades-preview">
+                <div class="unidad-preview">
+                    <span class="unidad-numero">1</span>
+                    <span class="unidad-titulo">Metodología Lógica</span>
+                </div>
+                <div class="unidad-preview">
+                    <span class="unidad-numero">2</span>
+                    <span class="unidad-titulo">Estructuras Básicas</span>
+                </div>
+                <div class="unidad-preview">
+                    <span class="unidad-numero">3</span>
+                    <span class="unidad-titulo">Estructuras de Control</span>
+                </div>
+                <div class="unidad-preview">
+                    <span class="unidad-numero">4</span>
+                    <span class="unidad-titulo">Subprogramas y Arreglos</span>
+                </div>
+                <div class="unidad-preview">
+                    <span class="unidad-numero">5</span>
+                    <span class="unidad-titulo">Programación Estructurada</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
