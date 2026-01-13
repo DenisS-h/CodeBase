@@ -1,5 +1,5 @@
 from werkzeug.security import generate_password_hash, check_password_hash
-from database import get_db_connection, USE_POSTGRESQL
+from database import get_db_connection
 
 class Usuario:
     @staticmethod
@@ -9,14 +9,9 @@ class Usuario:
         password_hash = generate_password_hash(password)
         
         try:
-            if USE_POSTGRESQL:
-                cursor.execute('INSERT INTO usuarios (nombre_completo, email, password, es_admin, activo, requiere_cambio_password) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id', 
-                             (nombre_completo, email, password_hash, es_admin, activo, 0))
-                usuario_id = cursor.fetchone()[0]
-            else:
-                cursor.execute('INSERT INTO usuarios (nombre_completo, email, password, es_admin, activo, requiere_cambio_password) VALUES (?, ?, ?, ?, ?, ?)', 
-                             (nombre_completo, email, password_hash, es_admin, activo, 0))
-                usuario_id = cursor.lastrowid
+            cursor.execute('INSERT INTO usuarios (nombre_completo, email, password, es_admin, activo, requiere_cambio_password) VALUES (?, ?, ?, ?, ?, ?)', 
+                         (nombre_completo, email, password_hash, es_admin, activo, 0))
+            usuario_id = cursor.lastrowid
             conn.commit()
             conn.close()
             return usuario_id

@@ -1,112 +1,16 @@
 import sqlite3
 from datetime import datetime
 import os
-from urllib.parse import urlparse
 
-# Detectar si estamos en producción (Render.com) o desarrollo local
-DATABASE_URL = os.getenv('DATABASE_URL')
-
-# Si hay DATABASE_URL, usar PostgreSQL; si no, usar SQLite
-USE_POSTGRESQL = DATABASE_URL is not None
-
-if USE_POSTGRESQL:
-    import psycopg2
-    from psycopg2.extras import RealDictCursor
-    # Parsear la URL de la base de datos
-    parsed = urlparse(DATABASE_URL)
-    DB_CONFIG = {
-        'dbname': parsed.path[1:],  # Remover el '/' inicial
-        'user': parsed.username,
-        'password': parsed.password,
-        'host': parsed.hostname,
-        'port': parsed.port
-    }
-else:
-    DATABASE_PATH = os.path.join('instance', 'aprendizaje.db')
-
-class DatabaseConnection:
-    """Wrapper para conexiones de base de datos que funciona con SQLite y PostgreSQL"""
-    def __init__(self, conn, use_postgresql):
-        self.conn = conn
-        self.use_postgresql = use_postgresql
-        if not use_postgresql:
-            conn.row_factory = sqlite3.Row
-    
-    def execute(self, sql, params=None):
-        """Ejecuta una consulta SQL adaptada para la base de datos correspondiente"""
-        if self.use_postgresql:
-            # Adaptar ? a %s para PostgreSQL
-            sql = sql.replace('?', '%s')
-            cursor = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            if params:
-                cursor.execute(sql, params)
-            else:
-                cursor.execute(sql)
-            # Devolver un objeto que tenga fetchone y fetchall
-            class CursorWrapper:
-                def __init__(self, cursor, use_postgresql):
-                    self.cursor = cursor
-                    self.use_postgresql = use_postgresql
-                
-                def fetchone(self):
-                    row = self.cursor.fetchone()
-                    return row if row else None
-                
-                def fetchall(self):
-                    return self.cursor.fetchall()
-                
-                @property
-                def lastrowid(self):
-                    # PostgreSQL no tiene lastrowid, se usa RETURNING en la consulta
-                    return None
-            return CursorWrapper(cursor, True)
-        else:
-            # SQLite usa ? directamente
-            cursor = self.conn.cursor()
-            if params:
-                cursor.execute(sql, params)
-            else:
-                cursor.execute(sql)
-            return cursor
-    
-    def commit(self):
-        """Hace commit de la transacción"""
-        self.conn.commit()
-    
-    def close(self):
-        """Cierra la conexión"""
-        self.conn.close()
-    
-    @property
-    def cursor(self):
-        """Obtiene un cursor para operaciones avanzadas"""
-        if self.use_postgresql:
-            return self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        else:
-            return self.conn.cursor()
+# Usar SQLite siempre
+DATABASE_PATH = os.path.join('instance', 'aprendizaje.db')
 
 def get_db_connection():
-    """Obtiene una conexión a la base de datos (PostgreSQL o SQLite)"""
-    if USE_POSTGRESQL:
-        conn = psycopg2.connect(**DB_CONFIG)
-        conn.autocommit = False
-        return DatabaseConnection(conn, True)
-    else:
-        os.makedirs('instance', exist_ok=True)
-        conn = sqlite3.connect(DATABASE_PATH)
-        return DatabaseConnection(conn, False)
-
-def adapt_sql(sql):
-    """Adapta sentencias SQL para PostgreSQL o SQLite"""
-    if USE_POSTGRESQL:
-        # Adaptar para PostgreSQL
-        sql = sql.replace('INTEGER PRIMARY KEY AUTOINCREMENT', 'SERIAL PRIMARY KEY')
-        sql = sql.replace('BOOLEAN DEFAULT 0', 'BOOLEAN DEFAULT FALSE')
-        sql = sql.replace('BOOLEAN DEFAULT 1', 'BOOLEAN DEFAULT TRUE')
-        sql = sql.replace('INTEGER DEFAULT 0', 'INTEGER DEFAULT 0')  # Ya es compatible
-        # SQLite usa ? para parámetros, PostgreSQL usa %s
-        sql = sql.replace('?', '%s')
-    return sql
+    """Obtiene una conexión a la base de datos SQLite"""
+    os.makedirs('instance', exist_ok=True)
+    conn = sqlite3.connect(DATABASE_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 def init_db():
     """Inicializa la base de datos con las tablas necesarias.
@@ -114,13 +18,10 @@ def init_db():
     No modifica ni elimina datos existentes."""
     
     conn = get_db_connection()
-    if USE_POSTGRESQL:
-        cursor = conn.cursor()
-    else:
-        cursor = conn.cursor()
+    cursor = conn.cursor()
     
     # Tabla de usuarios
-    sql = '''
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS usuarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre_completo TEXT NOT NULL,
@@ -129,13 +30,16 @@ def init_db():
             fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             racha_dias INTEGER DEFAULT 0,
             puntos_totales INTEGER DEFAULT 0,
-            nivel_actual INTEGER DEFAULT 1
+            nivel_actual INTEGER DEFAULT 1,
+            es_admin INTEGER DEFAULT 0,
+            activo INTEGER DEFAULT 1,
+            requiere_cambio_password INTEGER DEFAULT 0,
+            foto_perfil TEXT
         )
-    '''
-    cursor.execute(adapt_sql(sql))
+    ''')
     
     # Tabla de unidades (basado en el PEA)
-    sql = '''
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS unidades (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             numero INTEGER NOT NULL,
@@ -143,11 +47,10 @@ def init_db():
             descripcion TEXT,
             orden INTEGER NOT NULL
         )
-    '''
-    cursor.execute(adapt_sql(sql))
+    ''')
     
     # Tabla de lecciones
-    sql = '''
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS lecciones (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             unidad_id INTEGER NOT NULL,
@@ -157,11 +60,10 @@ def init_db():
             orden INTEGER NOT NULL,
             FOREIGN KEY (unidad_id) REFERENCES unidades (id)
         )
-    '''
-    cursor.execute(adapt_sql(sql))
+    ''')
     
     # Tabla de ejercicios
-    sql = '''
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS ejercicios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             leccion_id INTEGER NOT NULL,
@@ -173,11 +75,10 @@ def init_db():
             puntos INTEGER DEFAULT 10,
             FOREIGN KEY (leccion_id) REFERENCES lecciones (id)
         )
-    '''
-    cursor.execute(adapt_sql(sql))
+    ''')
     
     # Tabla de progreso del usuario
-    sql = '''
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS progreso_usuario (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             usuario_id INTEGER NOT NULL,
@@ -191,11 +92,10 @@ def init_db():
             FOREIGN KEY (leccion_id) REFERENCES lecciones (id),
             UNIQUE(usuario_id, leccion_id)
         )
-    '''
-    cursor.execute(adapt_sql(sql))
+    ''')
     
     # Tabla para contenido PDF subido por admin
-    sql = '''
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS contenido_pdf (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             unidad_id INTEGER NOT NULL,
@@ -205,8 +105,7 @@ def init_db():
             fecha_subida TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (unidad_id) REFERENCES unidades (id)
         )
-    '''
-    cursor.execute(adapt_sql(sql))
+    ''')
     
     # Insertar unidades del curso de Python
     unidades_data = [
@@ -824,7 +723,7 @@ def init_db():
             (leccion_u3_l4_id, 'fill_in_blank', 'Completa el código para clasificar la edad de una persona:<br><code>edad = 15<br><br>if edad < 13:<br>    categoria = "Niño"<br>    print("Es un niño")<br>___ edad < 18:<br>    categoria = "Adolescente"<br>else:<br>    categoria = "Adulto"</code>',
              '', 'elif', 'La palabra clave elif se usa para agregar condiciones adicionales después de un if', 10),
             
-            (leccion_u3_l4_id, 'fill_in_blank', 'Completa el código usando expresión booleana directa (sin if/else):<br><code>edad = 20<br>tiene_licencia = True<br><br>puede_conducir = edad >= 18 ___ tiene_licencia<br>if puede_conducir:<br>    print("Puede conducir")</code>',
+            (leccion_u3_l4_id, 'fill_in_blank', 'Completa el código usando expresión booleana directa (sin if/else tradicional):<br><code>edad = 20<br>tiene_licencia = True<br><br>puede_conducir = edad >= 18 ___ tiene_licencia<br>if puede_conducir:<br>    print("Puede conducir")</code>',
              '', 'and', 'El operador and verifica que ambas condiciones sean verdaderas. El resultado se guarda directamente en una variable', 10),
             
             (leccion_u3_l4_id, 'fill_in_blank', 'Completa el código para determinar el descuento según la edad y membresía:<br><code>edad = 25<br>tiene_membresia = True<br>descuento = 0<br><br>if edad < 18:<br>    descuento = 10<br>    print("Descuento para menores")<br>___ edad < 65 ___ tiene_membresia:<br>    descuento = 20<br>    print("Descuento para miembros")<br>else:<br>    descuento = 5<br>    print("Descuento estándar")</code>',
@@ -971,7 +870,7 @@ def init_db():
             VALUES (?, ?, ?, ?, ?, ?, ?)
         ''', ejercicios_u4_l3)
         
-        # Ejercicios para la Lección 4 de Unidad 4: Acceder y modificar información dentro de un diccionario - 10 ejercicios totales (4 opción múltiple + 3 verdadero/falso + 3 fill_in_blank)
+        # Ejercicios para la Lección 4 de Unidad 4: Acceder y modificar información dentro de un diccionario - 10 ejercicios totales (4 opción múltiple + 4 verdadero/falso + 2 fill_in_blank)
         ejercicios_u4_l4 = [
             # Opción múltiple (4 ejercicios)
             (leccion_u4_l4_id, 'opcion_multiple', '¿Cómo se actualiza el valor de una clave existente en un diccionario?',
@@ -1200,8 +1099,6 @@ def init_db():
     conn.commit()
     conn.close()
     print("Base de datos inicializada correctamente")
-
-# La función get_db_connection ya está definida arriba
 
 if __name__ == '__main__':
     init_db()
